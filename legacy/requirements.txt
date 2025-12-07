@@ -1,0 +1,7 @@
+flask
+pandas
+sqlalchemy
+pytesseract
+pymupdf
+gunicorn
+Flask-Login

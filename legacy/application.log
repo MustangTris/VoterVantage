@@ -1,0 +1,8 @@
+2025-07-01 00:45:04,658 - app - INFO - Successfully processed Rancho Mirage 2024.xlsx
+2025-07-01 00:45:04,678 - app - DEBUG - Accessing admin page.
+2025-07-01 00:47:22,286 - app - DEBUG - Accessing public index page.
+2025-07-01 00:47:22,290 - app - DEBUG - Fetched 0 contributions from DB.
+2025-07-01 00:47:22,291 - app - DEBUG - Fetched 0 expenditures from DB.
+2025-07-01 00:47:25,369 - app - DEBUG - Accessing public index page.
+2025-07-01 00:47:25,371 - app - DEBUG - Fetched 0 contributions from DB.
+2025-07-01 00:47:25,371 - app - DEBUG - Fetched 0 expenditures from DB.
