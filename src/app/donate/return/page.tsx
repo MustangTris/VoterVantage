@@ -8,6 +8,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, CheckCircle2 } from 'lucide-react';
 
 export default function ReturnPage() {
+    return (
+        <React.Suspense fallback={
+            <div className="container mx-auto flex items-center justify-center min-h-[60vh] px-4">
+                <Loader2 className="h-8 w-8 text-purple-500 animate-spin" />
+            </div>
+        }>
+            <ReturnContent />
+        </React.Suspense>
+    );
+}
+
+function ReturnContent() {
     const searchParams = useSearchParams();
     const sessionId = searchParams.get('session_id');
     const [status, setStatus] = useState<string | null>(null);
