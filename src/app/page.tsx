@@ -136,7 +136,7 @@ export default function Home() {
                   Join as a Volunteer
                 </Button>
               </Link>
-              <Link href="https://www.votervantage.org/" target="_blank">
+              <Link href="/donate">
                 <Button variant="outline" size="lg" className="h-12 px-8 rounded-full border-white/10 bg-transparent text-white hover:bg-white/10">
                   Donate
                 </Button>

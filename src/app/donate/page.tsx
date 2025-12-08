@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
+import { DonationForm } from "./donation-form"
 
 export default function DonatePage() {
     return (
@@ -58,27 +59,8 @@ export default function DonatePage() {
                             <CardTitle>Secure Donation</CardTitle>
                             <CardDescription className="text-slate-400">Choose your preferred payment method below.</CardDescription>
                         </CardHeader>
-                        <CardContent className="flex-1 rounded-lg bg-black/40 m-6 border border-white/5 flex items-center justify-center relative overflow-hidden group">
-
-                            {/* Placeholder UI for 'Outsourced API' */}
-                            <div className="text-center space-y-4 z-10">
-                                <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-md">
-                                    <span className="text-3xl">🔒</span>
-                                </div>
-                                <h3 className="text-xl font-semibold text-white">Payment Processor Loading...</h3>
-                                <p className="text-sm text-slate-500 max-w-xs mx-auto">
-                                    This area will load the secure payment form from our trusted partner (e.g., Stripe, PayPal, Donorbox).
-                                </p>
-                                <div className="pt-6 flex justify-center gap-2 opacity-50">
-                                    <div className="h-8 w-12 bg-white/20 rounded"></div>
-                                    <div className="h-8 w-12 bg-white/20 rounded"></div>
-                                    <div className="h-8 w-12 bg-white/20 rounded"></div>
-                                    <div className="h-8 w-12 bg-white/20 rounded"></div>
-                                </div>
-                            </div>
-
-                            {/* Shimmer Effect */}
-                            <div className="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/5 to-transparent z-0"></div>
+                        <CardContent className="flex-1 m-6 flex flex-col justify-center">
+                            <DonationForm />
                         </CardContent>
                     </Card>
                 </div>
