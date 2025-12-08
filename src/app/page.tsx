@@ -18,7 +18,7 @@ export default function Home() {
           {/* Pill Badge */}
           <div className="inline-flex items-center rounded-full glass-panel px-4 py-1.5 text-sm font-medium text-purple-200 mb-8 border-purple-500/30">
             <span className="flex h-2 w-2 rounded-full bg-purple-400 mr-2 shadow-[0_0_10px_rgba(192,132,252,0.8)]"></span>
-            Democratizing Local Data
+            Informed and Free, Together We Shape Democracy
           </div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 leading-tight">
@@ -29,8 +29,8 @@ export default function Home() {
           </h1>
 
           <p className="max-w-2xl text-lg md:text-xl text-slate-300 mb-12 leading-relaxed">
-            VoterVantage brings transparency to local campaign finance.
-            We analyze filings to show you exactly who is funding whom.
+            VoterVantage is your only non-profit database of local political campaign finance disclosures.
+            We analyze Form 460 filings to show you exactly who is funding whom.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-6 w-full sm:w-auto">
@@ -80,7 +80,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">Powerful Insights</h2>
-            <p className="text-slate-400 max-w-xl mx-auto">Turning complex PDF filings into crystal clear data visualization.</p>
+            <p className="text-slate-400 max-w-xl mx-auto">Turning complex Form 460 filings into crystal clear data visualization.</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -90,7 +90,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-semibold text-white mb-3">Detailed Profiles</h3>
               <p className="text-slate-400 leading-relaxed">
-                Deep dives into every candidate and lobbying group. See complete financial backer breakdowns.
+                Deep dives into every candidate and lobbying group. See complete financial backer breakdowns on our dashboards.
               </p>
             </div>
 
@@ -110,7 +110,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-semibold text-white mb-3">Volunteer Powered</h3>
               <p className="text-slate-400 leading-relaxed">
-                Community-driven data accuracy. Our rapid portal digitizes filings in minutes.
+                Your right to know, our mission to show. Our rapid portal digitizes filings in minutes.
               </p>
             </div>
           </div>
@@ -124,10 +124,10 @@ export default function Home() {
         <div className="container mx-auto px-4 relative z-10 text-center">
           <div className="glass-panel max-w-4xl mx-auto rounded-3xl p-12 md:p-16 border-purple-500/20 bg-gradient-to-b from-white/5 to-transparent">
             <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">
-              Shine a Light on Local Politics
+              We give you the tools to light the way
             </h2>
-            <p className="text-lg text-slate-300 mb-10 max-w-2xl mx-auto">
-              We are a volunteer-run non-profit. Your help makes a difference in your community.
+            <p className="text-lg text-slate-300 mb-10 max-w-2xl mx-auto italic">
+              "Your support fuels us every day."
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Link href="/dashboard">
@@ -135,15 +135,14 @@ export default function Home() {
                   Join as a Volunteer
                 </Button>
               </Link>
-              <Link href="/contact">
+              <Link href="https://www.votervantage.org/" target="_blank">
                 <Button variant="outline" size="lg" className="h-12 px-8 rounded-full border-white/10 bg-transparent text-white hover:bg-white/10">
-                  Contact Us
+                  Donate
                 </Button>
               </Link>
             </div>
           </div>
-        </div>
-      </section>
+        </div>      </section>
     </div>
   )
 }

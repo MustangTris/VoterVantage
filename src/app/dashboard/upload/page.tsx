@@ -49,18 +49,18 @@ export default function UploadPage() {
         setError(null)
         setParsedData(null)
 
-        // Basic client-side Excel parsing
-        if (selectedFile.name.endsWith(".xlsx")) {
-            processExcel(selectedFile)
+        // Basic client-side Excel/CSV parsing
+        if (selectedFile.name.match(/\.(xlsx|xls|csv)$/i)) {
+            processSpreadsheet(selectedFile)
         } else if (selectedFile.name.endsWith(".pdf")) {
             // PDF handling would go here (or upload to server)
             // For now, just show a message.
         } else {
-            setError("Unsupported file format. Please upload .xlsx or .pdf")
+            setError("Unsupported file format. Please upload .csv, .xls, .xlsx, or .pdf")
         }
     }
 
-    const processExcel = async (file: File) => {
+    const processSpreadsheet = async (file: File) => {
         setIsProcessing(true)
         try {
             const arrayBuffer = await file.arrayBuffer()
@@ -74,7 +74,7 @@ export default function UploadPage() {
             setParsedData(jsonData)
         } catch (err) {
             console.error(err)
-            setError("Failed to parse Excel file. Is it a valid 'Form 460' export?")
+            setError(`Failed to parse file. Is it a valid spreadsheet?`)
         } finally {
             setIsProcessing(false)
         }
@@ -85,7 +85,7 @@ export default function UploadPage() {
             <div>
                 <h1 className="text-2xl font-bold text-slate-900">Upload Filing Data</h1>
                 <p className="text-slate-500">
-                    Upload Form 460 filings (Excel or PDF) to contribute to the database.
+                    Upload Form 460 filings (Excel, CSV, or PDF) to contribute to the database.
                 </p>
             </div>
 
@@ -105,7 +105,7 @@ export default function UploadPage() {
                         id="file-upload"
                         type="file"
                         className="hidden"
-                        accept=".xlsx,.pdf"
+                        accept=".csv,.xls,.xlsx,.pdf"
                         onChange={onFileInputChange}
                     />
 
@@ -132,7 +132,7 @@ export default function UploadPage() {
                             </div>
                             <h3 className="text-lg font-semibold text-slate-900">Click to upload or drag and drop</h3>
                             <p className="text-sm text-slate-500 mt-2 max-w-sm">
-                                Supports <span className="font-medium text-slate-700">.xlsx</span> (Excel) and <span className="font-medium text-slate-700">.pdf</span> (Form 460 Scans)
+                                Supports <span className="font-medium text-slate-700">.csv, .xls, .xlsx</span> (Spreadsheets) and <span className="font-medium text-slate-700">.pdf</span> (Form 460 Scans)
                             </p>
                         </>
                     )}

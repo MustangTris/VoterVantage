@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Search } from "lucide-react"
 
@@ -6,9 +7,21 @@ export function Navbar() {
     return (
         <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-[#030014]/50 backdrop-blur-xl transition-all">
             <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
-                <Link className="flex items-center gap-2 font-bold text-xl tracking-tight" href="/">
-                    <span className="text-purple-400 drop-shadow-[0_0_10px_rgba(168,85,247,0.5)]">Voter</span>
-                    <span className="text-white">Vantage</span>
+                <Link className="flex items-center gap-3 font-bold text-xl tracking-tight group" href="/">
+                    <div className="relative h-10 w-10 transition-transform group-hover:scale-110 duration-300">
+                        <div className="absolute inset-0 bg-purple-600 rounded-full blur-[20px] opacity-40 animate-pulse"></div>
+                        <Image
+                            src="/logo.png"
+                            alt="VoterVantage Logo"
+                            width={40}
+                            height={40}
+                            className="relative h-full w-full object-contain drop-shadow-[0_0_10px_rgba(168,85,247,0.8)]"
+                        />
+                    </div>
+                    <div className="flex items-center">
+                        <span className="text-purple-400 drop-shadow-[0_0_10px_rgba(168,85,247,0.5)]">Voter</span>
+                        <span className="text-white">Vantage</span>
+                    </div>
                 </Link>
                 <nav className="hidden gap-8 md:flex">
                     <Link
@@ -37,14 +50,20 @@ export function Navbar() {
                     </Link>
                 </nav>
                 <div className="flex items-center gap-4">
-                    <div className="relative hidden sm:block">
-                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                    <form action="/search" className="relative hidden sm:block">
                         <input
                             type="search"
+                            name="q"
                             placeholder="Search politicians..."
-                            className="h-9 w-64 rounded-full bg-white/5 border border-white/10 pl-10 pr-4 text-sm text-white outline-none focus:ring-2 focus:ring-purple-500/50 focus:bg-white/10 transition-all placeholder:text-slate-500"
+                            className="h-9 w-64 rounded-full bg-white/5 border border-white/10 pl-4 pr-10 text-sm text-white outline-none focus:ring-2 focus:ring-purple-500/50 focus:bg-white/10 transition-all placeholder:text-slate-500"
                         />
-                    </div>
+                        <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
+                            <Search className="h-4 w-4" />
+                        </button>
+                    </form>
+                    <Link href="https://www.votervantage.org/" target="_blank">
+                        <Button size="sm" variant="ghost" className="text-slate-300 hover:text-white hover:bg-white/10 rounded-full px-4">Donate</Button>
+                    </Link>
                     <Link href="/dashboard">
                         <Button size="sm" className="glass-button border-white/20 hover:bg-white/10 text-white rounded-full px-6">Volunteer</Button>
                     </Link>
