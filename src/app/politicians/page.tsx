@@ -8,24 +8,40 @@ import { auth } from "@/auth"
 import pool from "@/lib/db"
 import { EditableField } from "@/components/cms/editable-field"
 
+export const dynamic = 'force-dynamic'
+
 export default async function PoliticianDashboard() {
     const session = await auth()
     const isEditable = !!session?.user
 
     // Fetch politician data
-    const client = await pool.connect()
     let profile = null
     try {
-        const res = await client.query("SELECT * FROM profiles WHERE name = 'Mayor Johnson' LIMIT 1")
-        if (res.rows.length > 0) {
-            profile = res.rows[0]
+        const client = await pool.connect()
+        try {
+            const res = await client.query("SELECT * FROM profiles WHERE name = 'Mayor Johnson' LIMIT 1")
+            if (res.rows.length > 0) {
+                profile = res.rows[0]
+            }
+        } finally {
+            client.release()
         }
-    } finally {
-        client.release()
+    } catch (error) {
+        console.error("Database connection error:", error)
+        // Fallback or empty state will be handled below
     }
 
     if (!profile) {
-        return <div className="p-8 text-white">Profile not found. Please run seed script.</div>
+        // Fallback for demo/error state
+        if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+            return <div className="p-8 text-white">Database configuration missing. Please check deployment settings.</div>
+        }
+        // Use mock profile if DB fails (optional, but good for stability)
+        profile = {
+            id: 'mock-id',
+            name: 'Mayor Johnson',
+            description: 'Incumbent - 2nd Term (Data connection unavailable)',
+        }
     }
 
     return (
