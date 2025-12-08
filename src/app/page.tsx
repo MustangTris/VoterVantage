@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { TestToast } from "@/components/test-toast"
+
 import { ArrowRight, BarChart3, FileSearch, Users } from "lucide-react"
 
 export default function Home() {
@@ -144,7 +144,7 @@ export default function Home() {
             </div>
           </div>
         </div>      </section>
-      <TestToast />
+
     </div>
   )
 }
