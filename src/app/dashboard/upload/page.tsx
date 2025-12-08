@@ -1,13 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState } from "react"
 // import { useDropzone } from "react-dropzone" removed 
 // actually I'll standard HTML drag/drop to avoid installing more deps if possible, but react-dropzone is standard. 
 // I'll stick to a simple hidden file input with a styled label for simplicity and 0 deps.
 
 import * as XLSX from "xlsx"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Upload, FileSpreadsheet, File, AlertCircle, Check, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -203,7 +204,7 @@ export default function UploadPage() {
                             <div>
                                 <h3 className="font-semibold text-blue-900">PDF Parsing Required</h3>
                                 <p className="text-blue-700 text-sm mt-1">
-                                    PDFs require server-side OCR processing. Clicking "Review & Submit" will upload this file to the queue for automated extraction.
+                                    PDFs require server-side OCR processing. Clicking &quot;Review &amp; Submit&quot; will upload this file to the queue for automated extraction.
                                 </p>
                                 <Button className="mt-4" size="sm">Upload to Queue</Button>
                             </div>
