@@ -1,0 +1,13 @@
+# Database (Already configured in .env.local usually, but ensure it matches)
+DATABASE_URL="postgresql://postgres:password@localhost:5432/votervantage"
+
+# Authentication (NextAuth.js)
+# Generates a secure random string for encryption
+AUTH_SECRET="USE npx auth secret TO GENERATE"
+
+# Google OAuth Credentials
+# Go to Google Cloud Console -> APIs & Services -> Credentials
+# Create OAuth 2.0 Client ID for Web Application
+# Authorized redirect URIs: http://localhost:3000/api/auth/callback/google
+AUTH_GOOGLE_ID="YOUR_GOOGLE_CLIENT_ID"
+AUTH_GOOGLE_SECRET="YOUR_GOOGLE_CLIENT_SECRET"

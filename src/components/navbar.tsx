@@ -2,8 +2,12 @@ import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Search } from "lucide-react"
+import { auth } from "@/auth"
+import { UserMenu } from "@/components/user-menu"
 
-export function Navbar() {
+export async function Navbar() {
+    const session = await auth()
+
     return (
         <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-[#030014]/50 backdrop-blur-xl transition-all">
             <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
@@ -61,12 +65,10 @@ export function Navbar() {
                             <Search className="h-4 w-4" />
                         </button>
                     </form>
-                    <Link href="https://www.votervantage.org/" target="_blank">
+                    <Link href="/donate">
                         <Button size="sm" variant="ghost" className="text-slate-300 hover:text-white hover:bg-white/10 rounded-full px-4">Donate</Button>
                     </Link>
-                    <Link href="/dashboard">
-                        <Button size="sm" className="glass-button border-white/20 hover:bg-white/10 text-white rounded-full px-6">Volunteer</Button>
-                    </Link>
+                    <UserMenu user={session?.user} />
                 </div>
             </div>
         </header>

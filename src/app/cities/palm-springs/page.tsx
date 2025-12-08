@@ -1,6 +1,9 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Building2, DollarSign, Vote, Users } from "lucide-react"
+import { Building2, DollarSign, Vote, Users, TrendingUp, PieChart } from "lucide-react"
+import { TrendChart } from "@/components/charts/TrendChart"
+import { SourceBreakdownChart } from "@/components/charts/SourceBreakdownChart"
+import { cityTrends, citySources } from "@/lib/mock-data"
 
 export default function PalmSpringsDashboard() {
     return (
@@ -64,10 +67,39 @@ export default function PalmSpringsDashboard() {
                     </Card>
                 </div>
 
+                {/* Charts Row */}
+                <div className="grid gap-8 md:grid-cols-2 mb-8">
+                    {/* City-Wide Fundraising Trend */}
+                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                        <CardHeader>
+                            <CardTitle className="text-white flex items-center gap-2">
+                                <TrendingUp className="h-5 w-5 text-purple-400" />
+                                Annual Fundraising (City-Wide)
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <TrendChart data={cityTrends} color="#c084fc" title="Total Raised" />
+                        </CardContent>
+                    </Card>
+
+                    {/* Source Breakdown (Donor Composition) */}
+                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                        <CardHeader>
+                            <CardTitle className="text-white flex items-center gap-2">
+                                <PieChart className="h-5 w-5 text-blue-400" />
+                                Donor Composition
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <SourceBreakdownChart data={citySources} />
+                        </CardContent>
+                    </Card>
+                </div>
+
                 {/* Dashboard Content */}
                 <div className="grid gap-8 md:grid-cols-2">
-                    {/* Top Campaigns */}
-                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm h-full">
+                    {/* Top Campaigns (Text List) - Kept as additional info */}
+                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm h-full md:col-span-2">
                         <CardHeader>
                             <CardTitle className="text-white">Active Campaigns (Fundraising)</CardTitle>
                         </CardHeader>
@@ -87,34 +119,6 @@ export default function PalmSpringsDashboard() {
                                         <div className="text-right">
                                             <p className="font-bold text-green-400">{campaign.amount}</p>
                                             <p className="text-xs text-slate-500">{campaign.trend}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Top Contributors */}
-                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm h-full">
-                        <CardHeader>
-                            <CardTitle className="text-white">Largest Contributors (City-Wide)</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                {[
-                                    { name: "Desert Hotel Group", amount: "$250,000", type: "Corporate" },
-                                    { name: "Palm Springs Police Assoc.", amount: "$180,000", type: "Labor" },
-                                    { name: "Clean Energy Coalition", amount: "$125,000", type: "PAC" },
-                                    { name: "Regional Realty Board", amount: "$95,000", type: "Trade Group" },
-                                    { name: "Tech Ventures LLC", amount: "$75,000", type: "Corporate" },
-                                ].map((donor, i) => (
-                                    <div key={i} className="flex items-center justify-between border-b border-white/5 pb-2 last:border-0">
-                                        <div>
-                                            <p className="font-medium text-white">{donor.name}</p>
-                                            <p className="text-xs text-slate-500">{donor.type}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="font-bold text-green-400">{donor.amount}</p>
                                         </div>
                                     </div>
                                 ))}

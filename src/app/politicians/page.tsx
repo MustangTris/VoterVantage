@@ -1,6 +1,9 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowUpRight, DollarSign, Vote, Users, FileText } from "lucide-react"
+import { ArrowUpRight, DollarSign, Vote, Users, FileText, TrendingUp, PieChart } from "lucide-react"
+import { TrendChart } from "@/components/charts/TrendChart"
+import { SourceBreakdownChart } from "@/components/charts/SourceBreakdownChart"
+import { politicianTrends, politicianSources } from "@/lib/mock-data"
 
 export default function PoliticianDashboard() {
     return (
@@ -65,38 +68,39 @@ export default function PoliticianDashboard() {
                     </Card>
                 </div>
 
-                {/* Dashboard Content */}
-                <div className="grid gap-8 md:grid-cols-2">
-                    {/* Top Donors */}
-                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm h-full">
+                {/* Charts Row */}
+                <div className="grid gap-8 md:grid-cols-2 mb-8">
+                    {/* Fundraising Trend */}
+                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
                         <CardHeader>
-                            <CardTitle className="text-white">Top Donors</CardTitle>
+                            <CardTitle className="text-white flex items-center gap-2">
+                                <TrendingUp className="h-5 w-5 text-blue-400" />
+                                Fundraising History (2024 Cycle)
+                            </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="space-y-4">
-                                {[
-                                    { name: "Clean Energy Coalition", amount: "$50,000", type: "PAC" },
-                                    { name: "Local Firefighters Union", amount: "$25,000", type: "Labor" },
-                                    { name: "Tech Ventures LLC", amount: "$15,000", type: "Corporate" },
-                                    { name: "Desert Developers Assoc.", amount: "$12,500", type: "Trade Group" },
-                                    { name: "Jane Doe", amount: "$5,500", type: "Individual" },
-                                ].map((donor, i) => (
-                                    <div key={i} className="flex items-center justify-between border-b border-white/5 pb-2 last:border-0">
-                                        <div>
-                                            <p className="font-medium text-white">{donor.name}</p>
-                                            <p className="text-xs text-slate-500">{donor.type}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="font-bold text-green-400">{donor.amount}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                            <TrendChart data={politicianTrends} title="Contributions" />
                         </CardContent>
                     </Card>
 
+                    {/* Source Breakdown */}
+                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                        <CardHeader>
+                            <CardTitle className="text-white flex items-center gap-2">
+                                <PieChart className="h-5 w-5 text-purple-400" />
+                                Donation Sources
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <SourceBreakdownChart data={politicianSources} />
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Dashboard Content */}
+                <div className="grid gap-8 md:grid-cols-2">
                     {/* Recent Voting Record */}
-                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm h-full">
+                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm h-full md:col-span-2">
                         <CardHeader>
                             <CardTitle className="text-white">Recent Voting Record</CardTitle>
                         </CardHeader>
@@ -114,8 +118,8 @@ export default function PoliticianDashboard() {
                                             <p className="text-xs text-slate-500">{record.date}</p>
                                         </div>
                                         <span className={`px-2 py-1 rounded text-xs font-bold ${record.vote === 'Yes' ? 'bg-green-500/20 text-green-400' :
-                                                record.vote === 'No' ? 'bg-red-500/20 text-red-400' :
-                                                    'bg-slate-500/20 text-slate-400'
+                                            record.vote === 'No' ? 'bg-red-500/20 text-red-400' :
+                                                'bg-slate-500/20 text-slate-400'
                                             }`}>
                                             {record.vote}
                                         </span>
