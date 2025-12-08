@@ -4,8 +4,30 @@ import { ArrowUpRight, DollarSign, Vote, Users, FileText, TrendingUp, PieChart }
 import { TrendChart } from "@/components/charts/TrendChart"
 import { SourceBreakdownChart } from "@/components/charts/SourceBreakdownChart"
 import { politicianTrends, politicianSources } from "@/lib/mock-data"
+import { auth } from "@/auth"
+import pool from "@/lib/db"
+import { EditableField } from "@/components/cms/editable-field"
 
-export default function PoliticianDashboard() {
+export default async function PoliticianDashboard() {
+    const session = await auth()
+    const isEditable = !!session?.user
+
+    // Fetch politician data
+    const client = await pool.connect()
+    let profile = null
+    try {
+        const res = await client.query("SELECT * FROM profiles WHERE name = 'Mayor Johnson' LIMIT 1")
+        if (res.rows.length > 0) {
+            profile = res.rows[0]
+        }
+    } finally {
+        client.release()
+    }
+
+    if (!profile) {
+        return <div className="p-8 text-white">Profile not found. Please run seed script.</div>
+    }
+
     return (
         <div className="min-h-screen bg-[#030014] text-white overflow-hidden relative">
             {/* Background Ambience */}
@@ -15,11 +37,25 @@ export default function PoliticianDashboard() {
             <div className="container mx-auto px-4 py-8 relative z-10 pt-32">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                    <div>
-                        <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">
-                            Mayor Johnson
-                        </h1>
-                        <p className="text-slate-400 mt-1">Mayor of Palm Springs • Incumbent • Term 2024-2028</p>
+                    <div className="w-full max-w-2xl">
+                        <EditableField
+                            id={profile.id}
+                            table="profiles"
+                            field="name"
+                            initialValue={profile.name}
+                            isEditable={isEditable}
+                            className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400 block w-full"
+                        />
+                        <div className="mt-1">
+                            <EditableField
+                                id={profile.id}
+                                table="profiles"
+                                field="description"
+                                initialValue={profile.description}
+                                isEditable={isEditable}
+                                className="text-slate-400 block w-full"
+                            />
+                        </div>
                     </div>
                     <Button className="bg-blue-600 hover:bg-blue-700">Follow Candidate</Button>
                 </div>
