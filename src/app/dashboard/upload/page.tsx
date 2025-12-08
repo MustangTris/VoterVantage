@@ -319,7 +319,7 @@ export default function UploadPage() {
             </div>
 
             <div className="flex justify-end gap-3 pt-6 border-t">
-                <Button variant="outline" onClick={() => setFile(null) || setStep("UPLOAD")}>Cancel</Button>
+                <Button variant="outline" onClick={() => { setFile(null); setStep("UPLOAD"); }}>Cancel</Button>
                 <Button onClick={() => setStep("PREVIEW")} disabled={REQUIRED_FIELDS.some(f => f.required && !columnMapping[f.key])}>
                     Next: Validate & Preview <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
