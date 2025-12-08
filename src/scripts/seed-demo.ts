@@ -50,7 +50,7 @@ async function main() {
 
     } catch (e) {
         // If unique constraint fails (e.g. if I ran this before), just ignore or log
-        console.log("Error (might already exist):", e.message);
+        console.log("Error (might already exist):", (e as Error).message);
 
         // Let's try to fetch him to get ID
     }
