@@ -8,7 +8,9 @@ try {
     if (fs.existsSync(envPath)) {
         const envConfig = fs.readFileSync(envPath, 'utf8');
         envConfig.split('\n').forEach(line => {
-            const [key, value] = line.split('=');
+            const delimiterIndex = line.indexOf('=');
+            const key = line.substring(0, delimiterIndex);
+            const value = line.substring(delimiterIndex + 1);
             if (key && value) {
                 process.env[key.trim()] = value.trim().replace(/^["']|["']$/g, '');
             }
@@ -18,7 +20,9 @@ try {
     console.warn("Could not read .env.local", e);
 }
 
-const connectionString = process.env.DATABASE_URL;
+const connectionString = process.env.DATABASE_URL
+    ? process.env.DATABASE_URL.replace('?sslmode=require', '').replace('&sslmode=require', '')
+    : '';
 
 if (!connectionString) {
     console.error("No DATABASE_URL found in .env.local");
