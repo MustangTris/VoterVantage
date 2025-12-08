@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { signIn, signOut } from "next-auth/react"
+import { signOut } from "next-auth/react"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -33,21 +33,7 @@ export function UserMenu({ user }: UserMenuProps) {
         return () => document.removeEventListener("mousedown", handleClickOutside)
     }, [])
 
-    const handleLogin = async () => {
-        setIsLoading(true)
-        try {
-            await signIn("google", { callbackUrl: "/dashboard" })
-        } catch (error) {
-            console.error("Login failed", error)
-            toast({
-                title: "Login Failed",
-                description: "There was a problem starting the login process.",
-                variant: "destructive",
-            })
-        } finally {
-            setIsLoading(false)
-        }
-    }
+
 
     const handleLogout = async () => {
         setIsLoading(true)
@@ -66,15 +52,14 @@ export function UserMenu({ user }: UserMenuProps) {
 
     if (!user) {
         return (
-            <Button
-                size="sm"
-                onClick={handleLogin}
-                disabled={isLoading}
-                className="glass-button border-white/20 hover:bg-purple-600/20 text-white rounded-full px-6 transition-all"
-            >
-                {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Login
-            </Button>
+            <Link href="/login">
+                <Button
+                    size="sm"
+                    className="glass-button border-white/20 hover:bg-purple-600/20 text-white rounded-full px-6 transition-all"
+                >
+                    Login
+                </Button>
+            </Link>
         )
     }
 

@@ -14,6 +14,17 @@ interface SourceBreakdownChartProps {
 }
 
 export function SourceBreakdownChart({ data }: SourceBreakdownChartProps) {
+    if (!data || data.length === 0) {
+        return (
+            <div className="w-full h-[300px] flex items-center justify-center bg-white/5 rounded-lg border border-white/5">
+                <div className="text-center text-slate-500">
+                    <p className="text-lg font-medium">No Data Available</p>
+                    <p className="text-sm">No contributions recorded.</p>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="w-full h-[300px]">
             <ResponsiveContainer width="100%" height="100%">

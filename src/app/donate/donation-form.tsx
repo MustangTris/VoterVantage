@@ -12,7 +12,7 @@ import {
 
 // Make sure to add your public key if not already in env, or use a placeholder for dev if strict
 // Usually NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "pk_test_mock_key");
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 const PRESET_AMOUNTS = [10, 25, 50, 100]
 

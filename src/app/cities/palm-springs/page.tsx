@@ -3,9 +3,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Building2, DollarSign, Vote, Users, TrendingUp, PieChart } from "lucide-react"
 import { TrendChart } from "@/components/charts/TrendChart"
 import { SourceBreakdownChart } from "@/components/charts/SourceBreakdownChart"
-import { cityTrends, citySources } from "@/lib/mock-data"
+import { getCityStats } from "@/app/actions/stats"
 
-export default function PalmSpringsDashboard() {
+// Ensure dynamic rendering since we are fetching live data
+export const dynamic = 'force-dynamic'
+
+export default async function PalmSpringsDashboard() {
+    const stats = await getCityStats('Palm Springs')
+
+    // Format currency
+    const formatCurrency = (val: number) => {
+        if (val >= 1000000) return `$${(val / 1000000).toFixed(1)}M`
+        if (val >= 1000) return `$${(val / 1000).toFixed(1)}k`
+        return `$${val.toLocaleString()}`
+    }
+
     return (
         <div className="min-h-screen bg-[#030014] text-white overflow-hidden relative">
             {/* Background Ambience */}
@@ -31,7 +43,7 @@ export default function PalmSpringsDashboard() {
                             <DollarSign className="h-4 w-4 text-green-400" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-white">$12.5M</div>
+                            <div className="text-2xl font-bold text-white">{formatCurrency(stats.totalRaised)}</div>
                             <p className="text-xs text-slate-400">Total raised this cycle</p>
                         </CardContent>
                     </Card>
@@ -41,7 +53,7 @@ export default function PalmSpringsDashboard() {
                             <Vote className="h-4 w-4 text-purple-400" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-white">3</div>
+                            <div className="text-2xl font-bold text-white">{stats.activeMeasures}</div>
                             <p className="text-xs text-slate-400">On the ballot</p>
                         </CardContent>
                     </Card>
@@ -51,7 +63,7 @@ export default function PalmSpringsDashboard() {
                             <Users className="h-4 w-4 text-blue-400" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-white">14</div>
+                            <div className="text-2xl font-bold text-white">{stats.candidatesCount}</div>
                             <p className="text-xs text-slate-400">Running for office</p>
                         </CardContent>
                     </Card>
@@ -61,7 +73,7 @@ export default function PalmSpringsDashboard() {
                             <Building2 className="h-4 w-4 text-orange-400" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-white">28</div>
+                            <div className="text-2xl font-bold text-white">{stats.lobbyistsCount}</div>
                             <p className="text-xs text-slate-400">Active in city</p>
                         </CardContent>
                     </Card>
@@ -78,7 +90,7 @@ export default function PalmSpringsDashboard() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <TrendChart data={cityTrends} color="#c084fc" title="Total Raised" />
+                            <TrendChart data={stats.fundraisingTrend} color="#c084fc" title="Total Raised" />
                         </CardContent>
                     </Card>
 
@@ -91,7 +103,7 @@ export default function PalmSpringsDashboard() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <SourceBreakdownChart data={citySources} />
+                            <SourceBreakdownChart data={stats.donorComposition} />
                         </CardContent>
                     </Card>
                 </div>
@@ -104,24 +116,8 @@ export default function PalmSpringsDashboard() {
                             <CardTitle className="text-white">Active Campaigns (Fundraising)</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="space-y-4">
-                                {[
-                                    { name: "Re-elect Mayor Johnson", amount: "$1,245,000", trend: "+12%" },
-                                    { name: "Committee for Prop 12 (Zoning)", amount: "$890,000", trend: "+5%" },
-                                    { name: "Sarah Smith for City Council", amount: "$420,000", trend: "+20%" },
-                                    { name: "Michael Brown City Council", amount: "$380,000", trend: "+2%" },
-                                    { name: "Protect Our Parks (Prop 12 Opp)", amount: "$150,000", trend: "+45%" },
-                                ].map((campaign, i) => (
-                                    <div key={i} className="flex items-center justify-between border-b border-white/5 pb-2 last:border-0">
-                                        <div>
-                                            <p className="font-medium text-white">{campaign.name}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="font-bold text-green-400">{campaign.amount}</p>
-                                            <p className="text-xs text-slate-500">{campaign.trend}</p>
-                                        </div>
-                                    </div>
-                                ))}
+                            <div className="text-slate-400 italic text-center py-8">
+                                Campaign comparison data coming soon.
                             </div>
                         </CardContent>
                     </Card>

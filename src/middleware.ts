@@ -13,8 +13,8 @@ export default auth((req) => {
         return NextResponse.redirect(new URL("/login", req.nextUrl))
     }
 
-    // Redirect logged-in users away from login page
-    if (req.nextUrl.pathname.startsWith("/login") && isLoggedIn) {
+    // Redirect logged-in users away from login and register pages
+    if ((req.nextUrl.pathname.startsWith("/login") || req.nextUrl.pathname.startsWith("/signup")) && isLoggedIn) {
         return NextResponse.redirect(new URL("/dashboard", req.nextUrl))
     }
 

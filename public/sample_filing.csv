@@ -1,0 +1,5 @@
+Filer_NamL,Filer_ID,Filer_City,Committee_Type,Tran_NamF,Tran_NamL,Tran_Date,Amount,Rec_Type,Tran_City,Tran_State,Tran_Zip4,Tran_Emp,Tran_Occ,Description,Tran_Dscr
+"Smith for City Council 2024",1234567,Irvine,Recipient Committee,John,Doe,2024-01-15,1000.00,CONTRIBUTION,Irvine,CA,92618,Tech Corp,Engineer,Campaign Donation,
+"Smith for City Council 2024",1234567,Irvine,Recipient Committee,Jane,Roe,2024-02-20,500.00,CONTRIBUTION,Newport Beach,CA,92660,Med Clinic,Doctor,Fundraiser Ticket,
+"Smith for City Council 2024",1234567,Irvine,Recipient Committee,,,2024-03-05,250.50,EXPENDITURE,,,,,,Print Shop 123,Flyers for Campaign
+"Advocates for Better Parks",7654321,Newport Beach,Recipient Committee (Lobbying),Alice,Wonderland,2024-04-10,2500.00,CONTRIBUTION,Anaheim,CA,92801,Self,Consultant,Lobbying Support,

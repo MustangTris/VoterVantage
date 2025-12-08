@@ -160,7 +160,7 @@ export default function AboutPage() {
                                 </Button>
                             </Link>
                             <Link href="/dashboard">
-                                <Button variant="outline" size="lg" className="h-14 px-10 rounded-full border-white/20 hover:bg-white/10 text-white font-medium text-lg">
+                                <Button className="glass-button h-14 px-10 rounded-full text-white font-medium text-lg">
                                     Volunteer
                                 </Button>
                             </Link>

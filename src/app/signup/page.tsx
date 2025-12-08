@@ -1,35 +1,33 @@
 "use client"
 
-import { authenticate } from "@/actions/auth"
-import { signIn } from "next-auth/react"
+import { useActionState, useEffect } from "react"
+import { registerUser } from "@/actions/auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { FaGoogle } from "react-icons/fa"
 import Link from "next/link"
 import { useFormStatus } from "react-dom"
-import { useActionState, useEffect } from "react"
 import { useToast } from "@/hooks/use-toast"
 
-function LoginButton() {
+function SubmitButton() {
     const { pending } = useFormStatus()
     return (
         <Button className="w-full" type="submit" disabled={pending}>
-            {pending ? "Signing in..." : "Sign in"}
+            {pending ? "Creating Account..." : "Create Account"}
         </Button>
     )
 }
 
-export default function LoginPage() {
-    const [errorMessage, formAction] = useActionState(authenticate, undefined)
+export default function SignupPage() {
+    const [errorMessage, formAction] = useActionState(registerUser, undefined)
     const { toast } = useToast()
 
     useEffect(() => {
         if (errorMessage) {
             toast({
                 variant: "destructive",
-                title: "Login Failed",
+                title: "Registration Failed",
                 description: errorMessage,
             })
         }
@@ -44,13 +42,23 @@ export default function LoginPage() {
 
             <Card className="w-full max-w-sm glass-panel border-white/10 relative z-10">
                 <CardHeader className="text-center">
-                    <CardTitle className="text-2xl font-bold text-white">Welcome Back</CardTitle>
+                    <CardTitle className="text-2xl font-bold text-white">Create Account</CardTitle>
                     <CardDescription className="text-slate-400">
-                        Sign in to access the Volunteer Dashboard
+                        Enter your details to create a new account
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent>
                     <form action={formAction} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="name" className="text-slate-200">Name</Label>
+                            <Input
+                                id="name"
+                                name="name"
+                                placeholder="John Doe"
+                                required
+                                className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:bg-white/10"
+                            />
+                        </div>
                         <div className="space-y-2">
                             <Label htmlFor="email" className="text-slate-200">Email</Label>
                             <Input
@@ -63,49 +71,27 @@ export default function LoginPage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="password" className="text-slate-200">Password</Label>
-                            </div>
+                            <Label htmlFor="password" className="text-slate-200">Password</Label>
                             <Input
                                 id="password"
                                 name="password"
                                 type="password"
                                 required
+                                minLength={6}
                                 className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:bg-white/10"
                             />
                         </div>
                         {errorMessage && (
                             <div className="text-sm text-red-400 font-medium">{errorMessage}</div>
                         )}
-                        <LoginButton />
+                        <SubmitButton />
                     </form>
-
-                    <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                            <span className="w-full border-t border-white/10" />
-                        </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-transparent px-2 text-slate-400 backdrop-blur-md">
-                                Or continue with
-                            </span>
-                        </div>
-                    </div>
-
-                    <Button
-                        className="w-full border-white/10 text-white hover:bg-white/10 hover:text-white"
-                        variant="outline"
-                        type="button"
-                        onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-                    >
-                        <FaGoogle className="mr-2 h-4 w-4" />
-                        Sign in with Google
-                    </Button>
                 </CardContent>
                 <CardFooter className="flex justify-center">
                     <div className="text-sm text-slate-400">
-                        Don't have an account?{" "}
-                        <Link href="/signup" className="underline text-purple-400 hover:text-purple-300">
-                            Sign up
+                        Already have an account?{" "}
+                        <Link href="/login" className="underline text-purple-400 hover:text-purple-300">
+                            Sign in
                         </Link>
                     </div>
                 </CardFooter>

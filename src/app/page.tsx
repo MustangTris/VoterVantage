@@ -1,9 +1,13 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { RotatingText } from "@/components/rotating-text"
+import { getLandingPageStats } from "@/app/actions/stats"
 
 import { ArrowRight, BarChart3, FileSearch, Users } from "lucide-react"
 
-export default function Home() {
+export default async function Home() {
+  const stats = await getLandingPageStats()
+
   return (
     <div className="flex flex-col min-h-screen relative overflow-hidden">
 
@@ -23,7 +27,7 @@ export default function Home() {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 leading-tight">
-            Follow the <span className="font-dollar text-[#85bb65] text-6xl md:text-8xl inline-block transform -rotate-2 relative top-2 mx-2 drop-shadow-md">Money</span> in <br className="hidden md:inline" />
+            Follow the <span className="inline-block transform -rotate-2 relative top-2 mx-2"><RotatingText /></span> in <br className="hidden md:inline" />
             <span className="text-gradient drop-shadow-sm">
               City Politics
             </span>
@@ -54,21 +58,24 @@ export default function Home() {
       <section className="py-12 relative z-10">
         <div className="container mx-auto px-4">
           <div className="glass-panel rounded-2xl p-8 md:p-12 border border-white/5 bg-white/5">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-white/5">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-8 text-center divide-x divide-white/5">
+
               <div className="p-2">
-                <div className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60 mb-2">$4.2M+</div>
-                <div className="text-sm text-slate-400 font-medium tracking-wider uppercase">Contributions</div>
-              </div>
-              <div className="p-2">
-                <div className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60 mb-2">12</div>
+                <div className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60 mb-2">
+                  {stats.citiesCount}
+                </div>
                 <div className="text-sm text-slate-400 font-medium tracking-wider uppercase">Cities</div>
               </div>
               <div className="p-2">
-                <div className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60 mb-2">150+</div>
+                <div className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60 mb-2">
+                  {stats.candidatesCount}+
+                </div>
                 <div className="text-sm text-slate-400 font-medium tracking-wider uppercase">Candidates</div>
               </div>
               <div className="p-2">
-                <div className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60 mb-2">100%</div>
+                <div className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60 mb-2">
+                  {stats.volunteersCount}%
+                </div>
                 <div className="text-sm text-slate-400 font-medium tracking-wider uppercase">Volunteer</div>
               </div>
             </div>
