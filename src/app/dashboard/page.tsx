@@ -2,8 +2,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ArrowUpRight, FileText, Upload, CheckCircle } from "lucide-react"
+import { getDashboardStats, getRecentActivity } from "./actions"
+import { formatDistanceToNow } from "date-fns"
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+    const stats = await getDashboardStats()
+    const recentActivity = await getRecentActivity()
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -23,8 +28,8 @@ export default function DashboardPage() {
                         <FileText className="h-4 w-4 text-slate-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">12</div>
-                        <p className="text-xs text-slate-500">+2 from last week</p>
+                        <div className="text-2xl font-bold">{stats.filingsCount}</div>
+                        <p className="text-xs text-slate-500">Lifetime total</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -33,8 +38,8 @@ export default function DashboardPage() {
                         <CheckCircle className="h-4 w-4 text-green-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">1,240</div>
-                        <p className="text-xs text-slate-500">+18% from last month</p>
+                        <div className="text-2xl font-bold">{stats.recordsVerified.toLocaleString()}</div>
+                        <p className="text-xs text-slate-500">Processed transactions</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -43,7 +48,7 @@ export default function DashboardPage() {
                         <ArrowUpRight className="h-4 w-4 text-slate-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">Top 5%</div>
+                        <div className="text-2xl font-bold">{stats.impactScore}</div>
                         <p className="text-xs text-slate-500">Among all volunteers</p>
                     </CardContent>
                 </Card>
@@ -55,22 +60,29 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
-                        {[1, 2, 3].map((i) => (
-                            <div key={i} className="flex items-center justify-between border-b border-slate-100 pb-4 last:border-0 last:pb-0">
-                                <div className="flex items-center gap-4">
-                                    <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">
-                                        460
+                        {recentActivity.length === 0 ? (
+                            <p className="text-sm text-slate-500">No recent activity found.</p>
+                        ) : (
+                            recentActivity.map((activity) => (
+                                <div key={activity.id} className="flex items-center justify-between border-b border-slate-100 pb-4 last:border-0 last:pb-0">
+                                    <div className="flex items-center gap-4">
+                                        <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">
+                                            {/* Initials or generic icon */}
+                                            <FileText className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-medium text-slate-900">{activity.description}</p>
+                                            <p className="text-xs text-slate-500">
+                                                {formatDistanceToNow(new Date(activity.date), { addSuffix: true })}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-slate-900">Uploaded Form 460 for John Doe</p>
-                                        <p className="text-xs text-slate-500">2 hours ago</p>
+                                    <div className="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
+                                        {activity.status}
                                     </div>
                                 </div>
-                                <div className="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
-                                    Pending Review
-                                </div>
-                            </div>
-                        ))}
+                            ))
+                        )}
                     </div>
                 </CardContent>
             </Card>

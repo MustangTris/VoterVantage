@@ -24,6 +24,13 @@ const REQUIRED_FIELDS: FieldDefinition[] = [
     { key: "Entity_Name", label: "Contributor/Payee", description: "Who gave/received money", required: true, aliases: ["tran_nam", "payee", "contributor", "name", "entity"] },
     { key: "Amount", label: "Amount", description: "Transaction value", required: true, aliases: ["amount", "amt", "payment", "received"] },
     { key: "Tran_Date", label: "Date", description: "Transaction Date", required: false, aliases: ["date", "time", "day", "rpt_date"] },
+    // Expanded Fields
+    { key: "Tran_Adr1", label: "Address", description: "Street Address", required: false, aliases: ["addr", "street", "address"] },
+    { key: "Tran_City", label: "City", description: "City", required: false, aliases: ["city"] },
+    { key: "Tran_State", label: "State", description: "State", required: false, aliases: ["state"] },
+    { key: "Tran_Zip4", label: "Zip Code", description: "Zip Code", required: false, aliases: ["zip", "postal"] },
+    { key: "Tran_Emp", label: "Employer", description: "Contributor Employer", required: false, aliases: ["employer", "emp"] },
+    { key: "Tran_Occ", label: "Occupation", description: "Contributor Occupation", required: false, aliases: ["occupation", "occ", "job"] },
 ]
 
 type WizardStep = "UPLOAD" | "MAP" | "PREVIEW"
@@ -276,15 +283,21 @@ export default function UploadPage() {
             {sheets.length > 1 && (
                 <div className="flex items-center gap-3 p-3 bg-yellow-50 border border-yellow-100 rounded-md">
                     <span className="text-sm font-medium text-yellow-800">Source Sheet:</span>
-                    <select
-                        className="text-sm border-gray-300 rounded p-1"
+                    <Select
                         value={selectedSheet || ""}
-                        onChange={(e) => {
-                            if (workbook) selectSheet(workbook, e.target.value)
+                        onValueChange={(val) => {
+                            if (workbook) selectSheet(workbook, val)
                         }}
                     >
-                        {sheets.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
+                        <SelectTrigger className="w-[200px] bg-white text-slate-900 border-yellow-300">
+                            <SelectValue placeholder="Select sheet" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {sheets.map(s => (
+                                <SelectItem key={s} value={s}>{s}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
             )}
 
