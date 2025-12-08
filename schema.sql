@@ -5,6 +5,7 @@ CREATE TABLE profiles (
     type TEXT NOT NULL CHECK (type IN ('POLITICIAN', 'LOBBYIST', 'CITY')),
     description TEXT,
     image_url TEXT,
+    city TEXT, -- Link to city for filtering
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -48,10 +49,63 @@ CREATE TABLE transactions (
     contributor_occupation TEXT,
     contributor_employer TEXT,
     
-    -- Location data for analysis
+    -- Existing Location data (matches Tran_City, Tran_State, Tran_Zip4)
     entity_city TEXT,
     entity_state TEXT,
     entity_zip TEXT,
+
+    -- Extended Donor/Entity Details
+    entity_cd TEXT,
+    entity_first_name TEXT,
+    entity_last_name TEXT, -- Can be used alongside entity_name
+    entity_prefix TEXT,
+    entity_suffix TEXT,
+    entity_adr1 TEXT,
+    entity_adr2 TEXT,
+    entity_self_employed TEXT, -- 'y' or 'n' or similar
+    
+    -- Committee Info
+    cmte_id TEXT, -- If donor is a committee
+
+    -- Treasurer Info (for Committee donors)
+    treasurer_last_name TEXT,
+    treasurer_first_name TEXT,
+    treasurer_prefix TEXT,
+    treasurer_suffix TEXT,
+    treasurer_adr1 TEXT,
+    treasurer_adr2 TEXT,
+    treasurer_city TEXT,
+    treasurer_state TEXT,
+    treasurer_zip TEXT,
+
+    -- Intermediary Info
+    intermediary_last_name TEXT,
+    intermediary_first_name TEXT,
+    intermediary_prefix TEXT,
+    intermediary_suffix TEXT,
+    intermediary_adr1 TEXT,
+    intermediary_adr2 TEXT,
+    intermediary_city TEXT,
+    intermediary_state TEXT,
+    intermediary_zip TEXT,
+    intermediary_employer TEXT,
+    intermediary_occupation TEXT,
+    intermediary_self_employed TEXT,
+
+    -- Candidate Info (if related/earmarked)
+    candidate_last_name TEXT,
+    candidate_first_name TEXT,
+    candidate_prefix TEXT,
+    candidate_suffix TEXT,
+
+    -- Administrative/Tracking
+    memo_code TEXT,
+    memo_refno TEXT,
+    bakref_tid TEXT,
+    xref_schnm TEXT,
+    xref_match TEXT,
+    loan_rate TEXT,
+    int_cmteid TEXT,
     
     external_id TEXT, -- Tran_ID from source to prevent duplicates
     
@@ -109,5 +163,11 @@ CREATE TABLE verification_tokens
   token      TEXT NOT NULL,
   expires    TIMESTAMP WITH TIME ZONE NOT NULL,
   
-  CONSTRAINT verification_token_unique UNIQUE (identifier, token)
+  PRIMARY KEY (identifier, token)
 );
+
+-- Performance Indexes
+CREATE INDEX IF NOT EXISTS idx_accounts_user_id ON public.accounts(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON public.sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_entity_profile_id ON public.transactions(entity_profile_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_filing_id ON public.transactions(filing_id);

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Search } from "lucide-react"
 import { auth } from "@/auth"
 import { UserMenu } from "@/components/user-menu"
+import { MobileMenu } from "@/components/mobile-menu"
 
 export async function Navbar() {
     const session = await auth()
@@ -65,10 +66,11 @@ export async function Navbar() {
                             <Search className="h-4 w-4" />
                         </button>
                     </form>
-                    <Link href="/donate">
+                    <Link href="/donate" className="hidden sm:block">
                         <Button size="sm" variant="ghost" className="text-slate-300 hover:text-white hover:bg-white/10 rounded-full px-4">Donate</Button>
                     </Link>
                     <UserMenu user={session?.user} />
+                    <MobileMenu />
                 </div>
             </div>
         </header>

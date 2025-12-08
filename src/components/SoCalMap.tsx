@@ -68,7 +68,9 @@ export default function SoCalMap({ connectedCities }: SoCalMapProps) {
                 <MapController />
 
                 {Object.entries(SOCAL_CITIES).map(([city, coords]) => {
-                    const isConnected = connectedCities.includes(city)
+                    const isConnected = connectedCities.some(
+                        connectedCity => connectedCity.toLowerCase() === city.toLowerCase()
+                    )
 
                     // If connected, show bright purple. If not, maybe show faint grey or hide?
                     // Let's show faint grey for context so the map isn't empty, but highlight connected ones.

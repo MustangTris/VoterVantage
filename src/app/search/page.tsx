@@ -107,7 +107,7 @@ export default function SearchPage() {
                         <Button
                             onClick={handleSearch}
                             disabled={isSearching}
-                            className="absolute right-2 top-2 bottom-2 md:top-3 md:bottom-3 rounded-full px-6 bg-purple-600 hover:bg-purple-700 text-white border-0 transition-colors"
+                            className="absolute right-2 top-2 bottom-2 md:top-3 md:bottom-3 rounded-full px-6 bg-purple-600 hover:bg-purple-700 text-white border-0 transition-colors h-auto"
                         >
                             {isSearching ? "Searching..." : "Search"}
                         </Button>

@@ -2,13 +2,17 @@
 
 :root {
   /* Deep Space / Liquid Glass Palette */
-  --background: #030014; /* Very dark deep violet/black */
+  --background: #030014;
+  /* Very dark deep violet/black */
   --foreground: #ffffff;
-  
-  --primary: #8b5cf6; /* Violet */
-  --secondary: #ec4899; /* Pink */
-  --accent: #3b82f6; /* Blue */
-  
+
+  --primary: #8b5cf6;
+  /* Violet */
+  --secondary: #ec4899;
+  /* Pink */
+  --accent: #3b82f6;
+  /* Blue */
+
   /* Glass Effect Variables */
   --glass-bg: rgba(255, 255, 255, 0.05);
   --glass-border: rgba(255, 255, 255, 0.1);
@@ -20,13 +24,15 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-dollar: var(--font-unifraktur);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
-  overflow-x: hidden; /* Prevent horizontal scroll from glowing blobs */
+  overflow-x: hidden;
+  /* Prevent horizontal scroll from glowing blobs */
 }
 
 /* Glassmorphism Utilities */
@@ -38,16 +44,16 @@ body {
 }
 
 .glass-button {
-  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255,255,255,0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;
   transition: all 0.3s ease;
 }
 
 .glass-button:hover {
-  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
-  border-color: rgba(255,255,255,0.4);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+  border-color: rgba(255, 255, 255, 0.4);
   box-shadow: 0 0 15px var(--glass-glow);
 }
 

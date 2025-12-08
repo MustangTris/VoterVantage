@@ -53,8 +53,8 @@ export default function UploadPage() {
         if (selectedFile.name.match(/\.(xlsx|xls|csv)$/i)) {
             processSpreadsheet(selectedFile)
         } else if (selectedFile.name.endsWith(".pdf")) {
-            // PDF handling would go here (or upload to server)
-            // For now, just show a message.
+            // PDF is valid now
+            setParsedData(null) // No data to parse client side
         } else {
             setError("Unsupported file format. Please upload .csv, .xls, .xlsx, or .pdf")
         }
@@ -81,16 +81,45 @@ export default function UploadPage() {
     }
 
     const handleSubmit = async () => {
-        if (!parsedData) return
+        if (!file) return
 
         setIsProcessing(true)
         try {
-            // Dynamically import action to ensure it's treated as server action
+            // 1. Upload file to Supabase Storage
+            let fileUrl = undefined
+
+            // Lazy load supabase client
+            const { createClient } = await import("@/lib/supabase/client")
+            const supabase = createClient()
+
+            const fileExt = file.name.split('.').pop()
+            const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`
+            const filePath = `uploads/${fileName}`
+
+            const { error: uploadError } = await supabase.storage
+                .from('filings')
+                .upload(filePath, file)
+
+            if (uploadError) {
+                console.error("Storage upload failed:", uploadError)
+                throw new Error("Failed to upload file to storage. Ensure 'filings' bucket exists.")
+            }
+
+            // Get public URL (or use signed URL if private, but public is easier for now)
+            const { data: { publicUrl } } = supabase.storage
+                .from('filings')
+                .getPublicUrl(filePath)
+
+            fileUrl = publicUrl
+
+            // 2. Submit Data & File Reference
             const { submitUpload } = await import("./actions")
-            const result = await submitUpload(parsedData)
+
+            // parsdeData is null for PDFs usually, but present for Excel
+            const result = await submitUpload(parsedData || [], fileUrl)
 
             if (result.success) {
-                alert(`Successfully imported ${result.count} records!`)
+                alert(`Successfully uploaded filing! Records imported: ${result.count?.toString() || '0'}`)
                 setParsedData(null)
                 setFile(null)
             } else {
@@ -98,7 +127,7 @@ export default function UploadPage() {
             }
         } catch (err) {
             console.error(err)
-            setError("Failed to submit data. Please try again.")
+            setError("Failed to submit. " + (err as Error).message)
         } finally {
             setIsProcessing(false)
         }
@@ -226,11 +255,11 @@ export default function UploadPage() {
                         <div className="flex items-start gap-3">
                             <Loader2 className="h-5 w-5 text-blue-600 mt-0.5" />
                             <div>
-                                <h3 className="font-semibold text-blue-900">PDF Parsing Required</h3>
+                                <h3 className="font-semibold text-blue-900">Ready to Upload PDF</h3>
                                 <p className="text-blue-700 text-sm mt-1">
-                                    PDFs require server-side OCR processing. Clicking &quot;Review &amp; Submit&quot; will upload this file to the queue for automated extraction.
+                                    This file will be securely stored. You can download it later from the Filings table.
                                 </p>
-                                <Button className="mt-4" size="sm">Upload to Queue</Button>
+                                <Button className="mt-4" size="sm" onClick={handleSubmit}>Upload Filing</Button>
                             </div>
                         </div>
                     </CardContent>

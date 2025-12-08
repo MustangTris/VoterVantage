@@ -1,10 +1,12 @@
 import { Button } from "@/components/ui/button"
 import { ArrowRight, FileText, Database, PieChart, Users, Heart } from "lucide-react"
 import Link from "next/link"
+import BackgroundAscii from "./BackgroundAscii"
 
 export default function AboutPage() {
     return (
         <div className="flex flex-col min-h-screen relative overflow-hidden">
+            <BackgroundAscii />
             {/* Background Ambience */}
             <div className="absolute top-[10%] left-[50%] translate-x-[-50%] w-[70%] h-[50%] rounded-full bg-blue-600/10 blur-[120px] pointer-events-none" />
             <div className="absolute bottom-[10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-purple-600/20 blur-[100px] pointer-events-none" />

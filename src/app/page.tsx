@@ -23,7 +23,7 @@ export default function Home() {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 leading-tight">
-            Follow the Money in <br className="hidden md:inline" />
+            Follow the <span className="font-dollar text-[#85bb65] text-6xl md:text-8xl inline-block transform -rotate-2 relative top-2 mx-2 drop-shadow-md">Money</span> in <br className="hidden md:inline" />
             <span className="text-gradient drop-shadow-sm">
               City Politics
             </span>

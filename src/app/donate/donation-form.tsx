@@ -1,16 +1,27 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Loader2 } from "lucide-react"
+import { loadStripe } from "@stripe/stripe-js"
+import {
+    EmbeddedCheckoutProvider,
+    EmbeddedCheckout,
+} from "@stripe/react-stripe-js"
+
+// Make sure to add your public key if not already in env, or use a placeholder for dev if strict
+// Usually NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "pk_test_mock_key");
 
 const PRESET_AMOUNTS = [10, 25, 50, 100]
 
 export function DonationForm() {
     const [amount, setAmount] = useState<number | string>(25)
     const [customAmount, setCustomAmount] = useState<string>("")
+    const [isRecurring, setIsRecurring] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
+    const [clientSecret, setClientSecret] = useState<string | null>(null)
 
     const handlePresetClick = (val: number) => {
         setAmount(val)
@@ -23,12 +34,13 @@ export function DonationForm() {
         setAmount(val)
     }
 
-    const handleDonate = async () => {
-        setIsLoading(true)
+    const fetchClientSecret = useCallback(async () => {
+        setIsLoading(true);
         try {
             const finalAmount = parseFloat(amount.toString())
             if (!finalAmount || finalAmount <= 0) {
                 alert("Please enter a valid amount")
+                setIsLoading(false);
                 return
             }
 
@@ -39,21 +51,37 @@ export function DonationForm() {
                 },
                 body: JSON.stringify({
                     amount: finalAmount,
+                    isRecurring,
                 }),
             })
 
             const data = await response.json()
 
-            if (data.url) {
-                window.location.href = data.url
+            if (data.clientSecret) {
+                setClientSecret(data.clientSecret)
             } else {
                 console.error("Failed to create checkout session")
+                alert("Failed to initialize checkout. Please try again.")
             }
         } catch (error) {
             console.error("Error:", error)
+            alert("An error occurred. Please try again.")
         } finally {
             setIsLoading(false)
         }
+    }, [amount, isRecurring]);
+
+    if (clientSecret) {
+        return (
+            <div className="w-full" id="checkout">
+                <EmbeddedCheckoutProvider
+                    stripe={stripePromise}
+                    options={{ clientSecret }}
+                >
+                    <EmbeddedCheckout className="h-[600px] rounded-lg overflow-hidden" />
+                </EmbeddedCheckoutProvider>
+            </div>
+        )
     }
 
     return (
@@ -87,8 +115,24 @@ export function DonationForm() {
                 />
             </div>
 
+            <div className="flex items-center space-x-2">
+                <input
+                    type="checkbox"
+                    id="recurring"
+                    checked={isRecurring}
+                    onChange={(e) => setIsRecurring(e.target.checked)}
+                    className="h-4 w-4 rounded border-slate-700 bg-white/5 text-purple-600 focus:ring-purple-500"
+                />
+                <label
+                    htmlFor="recurring"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-slate-300"
+                >
+                    Make this a monthly donation
+                </label>
+            </div>
+
             <Button
-                onClick={handleDonate}
+                onClick={fetchClientSecret}
                 disabled={isLoading}
                 className="w-full h-12 text-lg font-bold bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white transition-all shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:shadow-[0_0_25px_rgba(124,58,237,0.5)]"
             >
@@ -98,7 +142,7 @@ export function DonationForm() {
                         Processing...
                     </>
                 ) : (
-                    `Donate $${amount || "0"}`
+                    `Donate $${amount || "0"}${isRecurring ? "/mo" : ""}`
                 )}
             </Button>
 

@@ -42,5 +42,9 @@ CREATE TABLE verification_tokens
   token      TEXT NOT NULL,
   expires    TIMESTAMP WITH TIME ZONE NOT NULL,
   
-  CONSTRAINT verification_token_unique UNIQUE (identifier, token)
+  PRIMARY KEY (identifier, token)
 );
+
+-- Performance Indexes
+CREATE INDEX IF NOT EXISTS idx_accounts_user_id ON public.accounts(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON public.sessions(user_id);
