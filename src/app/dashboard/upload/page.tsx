@@ -80,6 +80,30 @@ export default function UploadPage() {
         }
     }
 
+    const handleSubmit = async () => {
+        if (!parsedData) return
+
+        setIsProcessing(true)
+        try {
+            // Dynamically import action to ensure it's treated as server action
+            const { submitUpload } = await import("./actions")
+            const result = await submitUpload(parsedData)
+
+            if (result.success) {
+                alert(`Successfully imported ${result.count} records!`)
+                setParsedData(null)
+                setFile(null)
+            } else {
+                setError(result.message || "Unknown error occurred")
+            }
+        } catch (err) {
+            console.error(err)
+            setError("Failed to submit data. Please try again.")
+        } finally {
+            setIsProcessing(false)
+        }
+    }
+
     return (
         <div className="max-w-4xl mx-auto space-y-8">
             <div>
@@ -149,18 +173,18 @@ export default function UploadPage() {
             {isProcessing && (
                 <div className="flex items-center justify-center py-8 text-blue-600">
                     <Loader2 className="h-8 w-8 animate-spin mr-3" />
-                    <p className="font-medium">Parsing file data...</p>
+                    <p className="font-medium">Processing...</p>
                 </div>
             )}
 
-            {parsedData && (
+            {parsedData && !isProcessing && (
                 <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-500">
                     <div className="flex items-center justify-between">
                         <h2 className="text-lg font-semibold flex items-center gap-2">
                             <Check className="h-5 w-5 text-green-500" />
                             Extracted {parsedData.length} records
                         </h2>
-                        <Button>Review & Submit</Button>
+                        <Button onClick={handleSubmit}>Review & Submit</Button>
                     </div>
                     <Card>
                         <div className="max-h-[400px] overflow-auto">

@@ -6,6 +6,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { LogOut, User, Settings, Loader2 } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 interface UserMenuProps {
     user?: {
@@ -19,6 +20,7 @@ export function UserMenu({ user }: UserMenuProps) {
     const [isOpen, setIsOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const menuRef = useRef<HTMLDivElement>(null)
+    const { toast } = useToast()
 
     // Close on click outside
     useEffect(() => {
@@ -37,6 +39,11 @@ export function UserMenu({ user }: UserMenuProps) {
             await signIn("google", { callbackUrl: "/dashboard" })
         } catch (error) {
             console.error("Login failed", error)
+            toast({
+                title: "Login Failed",
+                description: "There was a problem starting the login process.",
+                variant: "destructive",
+            })
         } finally {
             setIsLoading(false)
         }
@@ -44,6 +51,10 @@ export function UserMenu({ user }: UserMenuProps) {
 
     const handleLogout = async () => {
         setIsLoading(true)
+        toast({
+            title: "Logging out...",
+            description: "See you next time!",
+        })
         try {
             await signOut({ callbackUrl: "/" })
         } catch (error) {
