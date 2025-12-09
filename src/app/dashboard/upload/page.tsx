@@ -23,18 +23,18 @@ type FieldDefinition = {
 }
 
 const REQUIRED_FIELDS: FieldDefinition[] = [
-    { key: "Filer_NamL", label: "Filer Name", description: "Campaign/Committee Name", required: false, aliases: ["filer", "committee", "candidate"] },
-    { key: "Filer_ID", label: "Filer ID", description: "State/City ID", required: false, aliases: ["id", "filer_id"] },
-    { key: "Entity_Name", label: "Contributor/Payee", description: "Who gave/received money", required: true, aliases: ["tran_nam", "payee", "contributor", "name", "entity"] },
-    { key: "Amount", label: "Amount", description: "Transaction value", required: true, aliases: ["amount", "amt", "payment", "received"] },
-    { key: "Tran_Date", label: "Date", description: "Transaction Date", required: false, aliases: ["date", "time", "day", "rpt_date"] },
+    { key: "Filer_NamL", label: "Filer Name", description: "Campaign/Committee Name", required: false, aliases: ["filer_naml", "filer", "committee", "candidate"] },
+    { key: "Filer_ID", label: "Filer ID", description: "State/City ID", required: false, aliases: ["filer_id", "id"] },
+    { key: "Entity_Name", label: "Contributor/Payee", description: "Who gave/received money", required: true, aliases: ["tran_naml", "tran_nam", "bal_name", "payee", "contributor", "name", "entity"] },
+    { key: "Amount", label: "Amount", description: "Transaction value", required: true, aliases: ["tran_amt1", "tran_amt2", "amount", "amt", "payment", "received"] },
+    { key: "Tran_Date", label: "Date", description: "Transaction Date", required: false, aliases: ["tran_date", "date", "time", "day", "rpt_date"] },
     // Expanded Fields
-    { key: "Tran_Adr1", label: "Address", description: "Street Address", required: false, aliases: ["addr", "street", "address"] },
-    { key: "Tran_City", label: "City", description: "City", required: false, aliases: ["city"] },
-    { key: "Tran_State", label: "State", description: "State", required: false, aliases: ["state"] },
-    { key: "Tran_Zip4", label: "Zip Code", description: "Zip Code", required: false, aliases: ["zip", "postal"] },
-    { key: "Tran_Emp", label: "Employer", description: "Contributor Employer", required: false, aliases: ["employer", "emp"] },
-    { key: "Tran_Occ", label: "Occupation", description: "Contributor Occupation", required: false, aliases: ["occupation", "occ", "job"] },
+    { key: "Tran_Adr1", label: "Address", description: "Street Address", required: false, aliases: ["tran_adr1", "addr", "street", "address"] },
+    { key: "Tran_City", label: "City", description: "City", required: false, aliases: ["tran_city", "city"] },
+    { key: "Tran_State", label: "State", description: "State", required: false, aliases: ["tran_state", "state"] },
+    { key: "Tran_Zip4", label: "Zip Code", description: "Zip Code", required: false, aliases: ["tran_zip4", "zip", "postal"] },
+    { key: "Tran_Emp", label: "Employer", description: "Contributor Employer", required: false, aliases: ["tran_emp", "employer", "emp"] },
+    { key: "Tran_Occ", label: "Occupation", description: "Contributor Occupation", required: false, aliases: ["tran_occ", "occupation", "occ", "job"] },
 ]
 
 // --- Utils ---
@@ -47,18 +47,42 @@ const detectSheetType = (name: string): 'CONTRIBUTION' | 'EXPENDITURE' | 'UNKNOW
 
 const generateAutoMapping = (headers: string[]): Record<string, string> => {
     const newMapping: Record<string, string> = {}
-    const normalizedHeaders = headers.map(h => ({ raw: h, norm: h.toLowerCase().replace(/[^a-z0-9]/g, "") }))
+    // Pre-normalization for smarter matching
+    const normalizedHeaders = headers.map(h => ({
+        raw: h,
+        norm: h.toLowerCase().replace(/[^a-z0-9]/g, ""),
+        lower: h.toLowerCase()
+    }))
 
     REQUIRED_FIELDS.forEach(field => {
-        // 1. Try exact match
-        const exact = normalizedHeaders.find(h => h.raw === field.key)
+        // 1. Try exact match (case insensitive) on the key itself
+        const exact = normalizedHeaders.find(h => h.raw === field.key || h.lower === field.key.toLowerCase())
         if (exact) {
             newMapping[field.key] = exact.raw
             return
         }
-        // 2. Try alias match
+
+        // 2. Try alias matches with priority
         for (const alias of field.aliases) {
-            const match = normalizedHeaders.find(h => h.norm.includes(alias))
+            // Priority A: Exact match of alias
+            let match = normalizedHeaders.find(h => h.lower === alias || h.norm === alias)
+
+            // Priority B: "Starts with" alias (e.g. "Amount Used" for "Amount")
+            if (!match) {
+                match = normalizedHeaders.find(h => h.lower.startsWith(alias))
+            }
+
+            // Priority C: "Ends with" alias (e.g. "Total Amount" for "Amount")
+            if (!match) {
+                match = normalizedHeaders.find(h => h.lower.endsWith(alias))
+            }
+
+            // Priority D: Contains alias (Risky, but sometimes needed)
+            // Only use if alias length > 3 to avoid matching "id" in "Valid"
+            if (!match && alias.length > 3) {
+                match = normalizedHeaders.find(h => h.norm.includes(alias))
+            }
+
             if (match) {
                 newMapping[field.key] = match.raw
                 break
