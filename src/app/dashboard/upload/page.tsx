@@ -6,7 +6,7 @@ import * as XLSX from "xlsx"
 import Papa from "papaparse"
 import { Button } from "@/components/ui/button"
 import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from "@/components/ui/glass-card"
-import { Upload, File, AlertCircle, Check, Loader2, ArrowRight, ArrowLeft, Database, AlertTriangle } from "lucide-react"
+import { Upload, File, AlertCircle, Check, Loader2, ArrowRight, ArrowLeft, Database, AlertTriangle, Copy } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DebugConsole } from "@/components/debug-console"
@@ -25,7 +25,7 @@ type FieldDefinition = {
 const REQUIRED_FIELDS: FieldDefinition[] = [
     { key: "Filer_NamL", label: "Filer Name", description: "Campaign/Committee Name", required: false, aliases: ["filer_naml", "filer", "committee", "candidate"] },
     { key: "Filer_ID", label: "Filer ID", description: "State/City ID", required: false, aliases: ["filer_id", "id"] },
-    { key: "Entity_Name", label: "Contributor/Payee", description: "Who gave/received money", required: true, aliases: ["tran_naml", "tran_nam", "bal_name", "payee", "contributor", "name", "entity"] },
+    { key: "Entity_Name", label: "Contributor/Payee", description: "Who gave/received money", required: true, aliases: ["tran_naml", "tran_nam", "payee_naml", "payee_nams", "bal_name", "payee", "contributor", "name", "entity"] },
     { key: "Amount", label: "Amount", description: "Transaction value", required: true, aliases: ["tran_amt1", "tran_amt2", "amount", "amt", "payment", "received"] },
     { key: "Tran_Date", label: "Date", description: "Transaction Date", required: false, aliases: ["tran_date", "date", "time", "day", "rpt_date"] },
     // Expanded Fields
@@ -102,6 +102,38 @@ type ProcessedSheet = {
 }
 
 type WizardStep = "UPLOAD" | "MAP" | "PREVIEW"
+
+const CopyButton = ({ text, label = "Copy", className }: { text: string, label?: string, className?: string }) => {
+    const [copied, setCopied] = useState(false)
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(text)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+    }
+
+    return (
+        <Button
+            size="sm"
+            variant="outline"
+            className={cn(
+                "transition-all duration-300",
+                copied ? "border-green-500/50 bg-green-500/10 text-green-400" : "hover:bg-white/10",
+                className
+            )}
+            onClick={handleCopy}
+        >
+            <div className="relative flex items-center justify-center min-w-[4rem]">
+                <div className={cn("flex items-center transition-all duration-300 absolute", copied ? "opacity-0 scale-75" : "opacity-100 scale-100")}>
+                    <Copy className="h-3 w-3 mr-1" /> {label}
+                </div>
+                <div className={cn("flex items-center transition-all duration-300", copied ? "opacity-100 scale-100" : "opacity-0 scale-75")}>
+                    <Check className="h-3 w-3 mr-1" /> Copied!
+                </div>
+            </div>
+        </Button>
+    )
+}
 
 export default function UploadPage() {
     // -- State --
@@ -258,6 +290,13 @@ export default function UploadPage() {
             processedSheets.forEach(sheet => {
                 const { mapping, rows, type } = sheet
                 console.log(`Processing sheet ${sheet.name} with ${rows?.length} rows`)
+
+                // Skip validation for unknown sheet types (like Summary, 497, etc.)
+                if (type === 'UNKNOWN') {
+                    console.log(`Skipping validation for unknown sheet type: ${sheet.name}`)
+                    return
+                }
+
                 debugInfo.totalRows += rows?.length || 0
 
                 rows.forEach((row, idx) => {
@@ -277,7 +316,7 @@ export default function UploadPage() {
                     })
 
                     // Inject Rec_Type if known (and not overridden)
-                    if (type !== 'UNKNOWN' && !mappedRow['Rec_Type']) {
+                    if (!mappedRow['Rec_Type']) {
                         mappedRow['Rec_Type'] = type
                     }
 
@@ -638,13 +677,19 @@ export default function UploadPage() {
 
             {/* Invalid Reasons List */}
             {validatedData.invalid.length > 0 && (
-                <div className="border border-red-500/20 bg-red-500/10 rounded-lg p-4 max-h-40 overflow-auto">
-                    <h4 className="font-semibold text-red-300 text-sm mb-2">Errors Found:</h4>
+                <div className="border border-red-500/20 bg-red-500/10 rounded-lg p-4 max-h-96 overflow-auto relative">
+                    <div className="flex justify-between items-center mb-2 sticky top-0 bg-red-900/10 pb-2 backdrop-blur-sm">
+                        <h4 className="font-semibold text-red-300 text-sm">Errors Found ({validatedData.invalid.length}):</h4>
+                        <CopyButton
+                            text={validatedData.invalid.map(inv => `Row ${inv.row} (${inv.sheet}): ${inv.reason}`).join('\n')}
+                            label="Copy All"
+                            className="h-6 text-xs border-red-400/30 text-red-300 hover:bg-red-500/20"
+                        />
+                    </div>
                     <ul className="text-xs text-red-200/80 space-y-1">
-                        {validatedData.invalid.slice(0, 10).map((inv, i) => (
+                        {validatedData.invalid.map((inv, i) => (
                             <li key={i}>Row {inv.row} ({inv.sheet}): {inv.reason}</li>
                         ))}
-                        {validatedData.invalid.length > 10 && <li>...and {validatedData.invalid.length - 10} more.</li>}
                     </ul>
                 </div>
             )}
@@ -684,8 +729,15 @@ export default function UploadPage() {
             </div>
 
             {error && (
-                <div className="p-4 bg-red-500/10 text-red-300 rounded-md border border-red-500/20 flex items-center gap-2">
-                    <AlertCircle className="h-5 w-5" /> {error}
+                <div className="p-4 bg-red-500/10 text-red-300 rounded-md border border-red-500/20 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                        <AlertCircle className="h-5 w-5" /> {error}
+                    </div>
+                    <CopyButton
+                        text={error}
+                        label=""
+                        className="h-8 w-8 p-0 border-transparent text-red-300 hover:bg-red-500/20"
+                    />
                 </div>
             )}
 
