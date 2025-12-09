@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DebugConsole } from "@/components/debug-console"
 import { createClient } from "@/lib/supabase/client"
 import { TransactionSchema, cleanRow } from "@/lib/validators/transaction"
+import { authAction } from "./actions"
 
 // --- Configuration ---
 type FieldDefinition = {
@@ -375,9 +376,12 @@ export default function UploadPage() {
         let storagePath: string | null = null
 
         try {
-            // 0. Get User
-            const { data: { user }, error: userErr } = await supabase.auth.getUser()
-            if (userErr || !user) throw new Error("You must be logged in to upload files.")
+            // 0. Get User (via NextAuth)
+            const authResult = await authAction()
+            if (!authResult.success || !authResult.userId) {
+                throw new Error("You must be logged in to upload files.")
+            }
+            const userId = authResult.userId
 
             // 1. Archival: Upload Raw File
             const fileExt = file.name.split('.').pop()
@@ -418,7 +422,7 @@ export default function UploadPage() {
                         filer_name: payload.length > 0 ? (payload[0].Filer_NamL || 'Unknown Filer') : file.name,
                         status: 'PENDING', // FIXED: Was 'PROCESSING' which violates schema
                         source_file_url: storagePath,
-                        uploaded_by: user.id
+                        uploaded_by: userId
                     })
                     .select()
                     .single()
