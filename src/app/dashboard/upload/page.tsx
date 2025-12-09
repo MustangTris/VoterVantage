@@ -224,7 +224,9 @@ export default function UploadPage() {
         const debugInfo = {
             sheetCount: processedSheets.length,
             totalRows: 0,
-            rowsProcessed: 0
+            rowsProcessed: 0,
+            sampleRowKeys: processedSheets[0]?.rows[0] ? Object.keys(processedSheets[0].rows[0]) : [],
+            activeMapping: processedSheets[0]?.mapping
         }
 
         try {
@@ -670,11 +672,15 @@ export default function UploadPage() {
             )}
 
             {(validatedData as any).debugInfo && (
-                <div className="mt-4 p-4 bg-blue-500/10 text-blue-300 rounded-md border border-blue-500/20 text-xs font-mono">
+                <div className="mt-4 p-4 bg-blue-500/10 text-blue-300 rounded-md border border-blue-500/20 text-xs font-mono overflow-auto max-h-60">
                     <div className="font-bold mb-1">Debug Info:</div>
                     <div>Sheets: {(validatedData as any).debugInfo.sheetCount}</div>
                     <div>Total Rows: {(validatedData as any).debugInfo.totalRows}</div>
                     <div>Processed: {(validatedData as any).debugInfo.rowsProcessed}</div>
+                    <div className="mt-2 text-[10px] text-blue-400">
+                        <div>First Row Keys: {JSON.stringify((validatedData as any).debugInfo.sampleRowKeys)}</div>
+                        <div className="mt-1">Active Mapping: {JSON.stringify((validatedData as any).debugInfo.activeMapping, null, 2)}</div>
+                    </div>
                 </div>
             )}
         </div>
