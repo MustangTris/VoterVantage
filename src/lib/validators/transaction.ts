@@ -8,9 +8,17 @@ export const TransactionSchema = z.object({
     // Transaction Fields
     Entity_Name: z.string().min(1, "Name is required"),
     Amount: z.number(),
-    Tran_Date: z.union([z.string(), z.date()]).optional().transform((val) => {
+    Tran_Date: z.union([z.string(), z.date(), z.number()]).optional().transform((val) => {
         if (!val) return null
-        const date = new Date(val)
+        let date: Date
+        if (typeof val === 'number') {
+            // Excel serial date to JS Date
+            // (Serial - 25569) * 86400 * 1000
+            // Note: This assumes 1900 date system (standard for PC Excel)
+            date = new Date(Math.round((val - 25569) * 86400 * 1000))
+        } else {
+            date = new Date(val)
+        }
         return isNaN(date.getTime()) ? null : date.toISOString()
     }),
 
