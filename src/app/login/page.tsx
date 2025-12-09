@@ -92,7 +92,7 @@ export default function LoginPage() {
                     </div>
 
                     <Button
-                        className="w-full border-white/10 text-white hover:bg-white/10 hover:text-white"
+                        className="w-full border-white/10 text-white bg-transparent hover:bg-white/10 hover:text-white"
                         variant="outline"
                         type="button"
                         onClick={() => signIn("google", { callbackUrl: "/dashboard" })}

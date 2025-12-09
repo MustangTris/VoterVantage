@@ -28,11 +28,23 @@ export type Transaction = z.infer<typeof TransactionSchema>
 // Helper to clean raw CSV rows before Zod validation
 export const cleanRow = (row: any): any => {
     const amountRaw = row['Amount'] || row['Amount Received'] || row['Amount Paid'] || '0'
-    const amountClean = typeof amountRaw === 'number' ? amountRaw : parseFloat(String(amountRaw).replace(/[^0-9.-]+/g, ""))
+    let amountClean: number | null = 0
+
+    try {
+        if (typeof amountRaw === 'number') {
+            amountClean = amountRaw
+        } else {
+            // Safe string conversion before replace
+            const strVal = String(amountRaw || "").replace(/[^0-9.-]+/g, "")
+            amountClean = strVal ? parseFloat(strVal) : 0
+        }
+    } catch (e) {
+        amountClean = 0
+    }
 
     return {
         ...row,
-        Amount: isNaN(amountClean) ? 0 : amountClean, // Ensure number
-        Entity_Name: row['Entity_Name'] || row['Entity Name'] || row['Payee'] || row['Contributor'] || row['Name'],
+        Amount: (amountClean === null || isNaN(amountClean)) ? 0 : amountClean, // Ensure number
+        Entity_Name: row['Entity_Name'] || row['Entity Name'] || row['Payee'] || row['Contributor'] || row['Name'] || "Unknown Entity",
     }
 }

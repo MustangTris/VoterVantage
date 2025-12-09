@@ -8,7 +8,7 @@ export default function DashboardLayout({
     return (
         <div className="flex flex-col min-h-[calc(100vh-64px)] relative overflow-hidden bg-background">
             {/* Background Ambience - Liquid Orbs (Absolute position to sit behind everything) */}
-            <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-purple-900/20 blur-[120px] pointer-events-none animate-pulse" />
+            <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-purple-900/20 blur-[120px] pointer-events-none" />
             <div className="absolute top-[20%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-900/10 blur-[100px] pointer-events-none" />
             <div className="absolute bottom-[-10%] left-[20%] w-[60%] h-[60%] rounded-full bg-indigo-900/20 blur-[120px] pointer-events-none" />
 

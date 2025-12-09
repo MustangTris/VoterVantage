@@ -72,7 +72,7 @@ export default function SearchPage() {
     }
 
     return (
-        <div className="flex flex-col min-h-screen relative overflow-hidden bg-[#030014]">
+        <div className="flex flex-col min-h-screen relative overflow-hidden">
             {/* Background Ambience - Liquid Orbs */}
             <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-purple-600/20 blur-[120px] pointer-events-none animate-pulse" />
             <div className="absolute top-[20%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[100px] pointer-events-none" />

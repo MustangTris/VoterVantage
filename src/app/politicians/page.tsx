@@ -45,7 +45,7 @@ export default async function PoliticianDashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-[#030014] text-white overflow-hidden relative">
+        <div className="min-h-screen text-white overflow-hidden relative">
             {/* Background Ambience */}
             <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-600/20 blur-[120px] pointer-events-none" />
             <div className="absolute bottom-[-10%] left-[10%] w-[40%] h-[40%] rounded-full bg-purple-600/10 blur-[100px] pointer-events-none" />

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { ArrowRight, FileText, Database, PieChart, Users, Heart } from "lucide-react"
+import { ArrowRight, FileText, Database, PieChart, Users } from "lucide-react"
 import Link from "next/link"
 import BackgroundAscii from "./BackgroundAscii"
 
@@ -139,35 +139,7 @@ export default function AboutPage() {
             </section>
 
 
-            {/* Call to Action */}
-            <section className="py-24 relative overflow-hidden">
-                <div className="container mx-auto px-4 text-center z-10 relative">
-                    <div className="max-w-3xl mx-auto">
-                        <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-purple-500/10 text-purple-300 mb-6">
-                            <Heart className="h-6 w-6 mr-2 fill-purple-500/50" />
-                            <span className="font-medium">Support Our Cause</span>
-                        </div>
-                        <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                            We give you the tools to light the way.
-                        </h2>
-                        <p className="text-xl text-slate-300 mb-10 italic">
-                            "Your support fuels us every day."
-                        </p>
-                        <div className="flex flex-col sm:flex-row justify-center gap-4">
-                            <Link href="https://www.votervantage.org/" target="_blank">
-                                <Button size="lg" className="h-14 px-10 rounded-full bg-purple-600 hover:bg-purple-700 text-white font-semibold text-lg shadow-[0_0_20px_rgba(147,51,234,0.5)] transition-all hover:scale-105">
-                                    Donate Now
-                                </Button>
-                            </Link>
-                            <Link href="/dashboard">
-                                <Button className="glass-button h-14 px-10 rounded-full text-white font-medium text-lg">
-                                    Volunteer
-                                </Button>
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-            </section>
+
         </div>
     )
 }

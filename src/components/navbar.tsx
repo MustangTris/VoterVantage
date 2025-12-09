@@ -5,6 +5,7 @@ import { Search } from "lucide-react"
 import { auth } from "@/auth"
 import { UserMenu } from "@/components/user-menu"
 import { MobileMenu } from "@/components/mobile-menu"
+import { SearchMenu } from "@/components/search-menu"
 
 export async function Navbar() {
     const session = await auth()
@@ -23,9 +24,13 @@ export async function Navbar() {
                             className="relative h-full w-full object-contain drop-shadow-[0_0_10px_rgba(168,85,247,0.8)]"
                         />
                     </div>
-                    <div className="flex items-center">
-                        <span className="text-purple-400 drop-shadow-[0_0_10px_rgba(168,85,247,0.5)]">Voter</span>
-                        <span className="text-white">Vantage</span>
+                    <div className="flex flex-col leading-none justify-center">
+                        <span className="text-xl font-extrabold uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-100 to-purple-500 drop-shadow-[0_0_15px_rgba(192,132,252,0.6)]">
+                            Voter
+                        </span>
+                        <span className="text-[0.65rem] font-light uppercase tracking-[0.3em] text-purple-200/90 ml-[2px] drop-shadow-[0_0_5px_rgba(192,132,252,0.4)]">
+                            Vantage
+                        </span>
                     </div>
                 </Link>
                 <nav className="hidden gap-8 md:flex">
@@ -35,24 +40,14 @@ export async function Navbar() {
                     >
                         Home
                     </Link>
-                    <Link
-                        className="text-sm font-medium text-slate-300 hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all"
-                        href="/search"
-                    >
-                        Search Data
-                    </Link>
-                    <Link
-                        className="text-sm font-medium text-slate-300 hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all"
-                        href="/cities"
-                    >
-                        Cities
-                    </Link>
+                    <SearchMenu />
                     <Link
                         className="text-sm font-medium text-slate-300 hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all"
                         href="/about"
                     >
                         About Us
                     </Link>
+
                 </nav>
                 <div className="flex items-center gap-4">
                     <form action="/search" className="relative hidden sm:block">

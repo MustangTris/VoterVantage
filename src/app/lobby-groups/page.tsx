@@ -4,7 +4,7 @@ import { Building2, DollarSign, Target, TrendingUp } from "lucide-react"
 
 export default function LobbyGroupDashboard() {
     return (
-        <div className="min-h-screen bg-[#030014] text-white overflow-hidden relative">
+        <div className="min-h-screen text-white overflow-hidden relative">
             {/* Background Ambience */}
             <div className="absolute top-[20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-green-600/20 blur-[120px] pointer-events-none" />
             <div className="absolute bottom-[-10%] right-[10%] w-[40%] h-[40%] rounded-full bg-blue-600/10 blur-[100px] pointer-events-none" />
@@ -111,8 +111,8 @@ export default function LobbyGroupDashboard() {
                                             <p className="font-medium text-white">{issue.issue}</p>
                                         </div>
                                         <span className={`px-2 py-1 rounded text-xs font-bold ${issue.stance === 'Support' ? 'bg-green-500/20 text-green-400' :
-                                                issue.stance === 'Oppose' ? 'bg-red-500/20 text-red-400' :
-                                                    'bg-yellow-500/20 text-yellow-400'
+                                            issue.stance === 'Oppose' ? 'bg-red-500/20 text-red-400' :
+                                                'bg-yellow-500/20 text-yellow-400'
                                             }`}>
                                             {issue.stance}
                                         </span>

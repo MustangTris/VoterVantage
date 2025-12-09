@@ -104,7 +104,7 @@ export function MobileMenu() {
                                     {[
                                         { href: "/", label: "Home", icon: null },
                                         { href: "/search", label: "Search Data", icon: FileText },
-                                        { href: "/cities", label: "Cities", icon: Building2 },
+                                        { href: "/categories", label: "Browse Categories", icon: Building2 },
                                         { href: "/about", label: "About Us", icon: User },
                                     ].map((link, i) => (
                                         <motion.div

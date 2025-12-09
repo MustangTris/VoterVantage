@@ -5,7 +5,7 @@ import { useState, useMemo } from "react"
 import * as XLSX from "xlsx"
 import Papa from "papaparse"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { GlassCard, GlassCardContent, GlassCardHeader, GlassCardTitle, GlassCardDescription } from "@/components/ui/glass-card"
 import { Upload, File, AlertCircle, Check, Loader2, ArrowRight, ArrowLeft, Database, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -220,45 +220,58 @@ export default function UploadPage() {
         const valid: any[] = []
         const invalid: { sheet: string, row: number, reason: string, data: any }[] = []
 
-        processedSheets.forEach(sheet => {
-            const { mapping, rows, type } = sheet
+        try {
+            processedSheets.forEach(sheet => {
+                const { mapping, rows, type } = sheet
 
-            rows.forEach((row, idx) => {
-                const mappedRow: any = {}
-                const missingFields: string[] = []
+                rows.forEach((row, idx) => {
+                    const mappedRow: any = {}
+                    const missingFields: string[] = []
 
-                // 1. Map Data
-                REQUIRED_FIELDS.forEach(field => {
-                    const sourceHeader = mapping[field.key]
-                    const value = sourceHeader ? row[sourceHeader] : undefined
+                    // 1. Map Data
+                    REQUIRED_FIELDS.forEach(field => {
+                        const sourceHeader = mapping[field.key]
+                        const value = sourceHeader ? row[sourceHeader] : undefined
 
-                    if (field.required && (value === undefined || value === null || value === "")) {
-                        missingFields.push(field.label)
+                        if (field.required && (value === undefined || value === null || value === "")) {
+                            missingFields.push(field.label)
+                        }
+                        mappedRow[field.key] = value
+                    })
+
+                    // Inject Rec_Type if known (and not overridden)
+                    if (type !== 'UNKNOWN' && !mappedRow['Rec_Type']) {
+                        mappedRow['Rec_Type'] = type
                     }
-                    mappedRow[field.key] = value
+
+                    // 2. Pre-clean
+                    // Wrap in try-catch for individual row safety
+                    let cleanedForZod
+                    try {
+                        cleanedForZod = cleanRow(mappedRow)
+                    } catch (rowErr) {
+                        invalid.push({ sheet: sheet.name, row: idx + 2, reason: "Row processing error", data: row })
+                        return
+                    }
+
+                    // 3. Zod Validation
+                    const zodResult = TransactionSchema.safeParse(cleanedForZod)
+
+                    if (!zodResult.success) {
+                        const issues = (zodResult.error as any).errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ')
+                        invalid.push({ sheet: sheet.name, row: idx + 2, reason: issues, data: row })
+                    } else if (missingFields.length > 0) {
+                        invalid.push({ sheet: sheet.name, row: idx + 2, reason: `Missing: ${missingFields.join(", ")}`, data: row })
+                    } else {
+                        valid.push(zodResult.data)
+                    }
                 })
-
-                // Inject Rec_Type if known (and not overridden)
-                if (type !== 'UNKNOWN' && !mappedRow['Rec_Type']) {
-                    mappedRow['Rec_Type'] = type
-                }
-
-                // 2. Pre-clean
-                const cleanedForZod = cleanRow(mappedRow)
-
-                // 3. Zod Validation
-                const zodResult = TransactionSchema.safeParse(cleanedForZod)
-
-                if (!zodResult.success) {
-                    const issues = (zodResult.error as any).errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ')
-                    invalid.push({ sheet: sheet.name, row: idx + 2, reason: issues, data: row })
-                } else if (missingFields.length > 0) {
-                    invalid.push({ sheet: sheet.name, row: idx + 2, reason: `Missing: ${missingFields.join(", ")}`, data: row })
-                } else {
-                    valid.push(zodResult.data)
-                }
             })
-        })
+        } catch (err: any) {
+            console.error("Critical Validation Error:", err)
+            // If the whole loop crashes, we can't do much but return what we have or an empty set, 
+            // but at least we don't crash the React tree.
+        }
 
         return { valid, invalid }
     }, [processedSheets])
@@ -274,12 +287,16 @@ export default function UploadPage() {
         let storagePath: string | null = null
 
         try {
+            // 0. Get User
+            const { data: { user }, error: userErr } = await supabase.auth.getUser()
+            if (userErr || !user) throw new Error("You must be logged in to upload files.")
+
             // 1. Archival: Upload Raw File
             const fileExt = file.name.split('.').pop()
             const fileName = `raw_uploads/${Date.now()}_${file.name.replace(/[^a-z0-9.]/gi, '_')}`
 
             const { data: uploadData, error: uploadErr } = await supabase.storage
-                .from('filings') // Using 'filings' bucket as per existing setup
+                .from('filings')
                 .upload(fileName, file)
 
             if (uploadErr) throw new Error(`Storage upload failed: ${uploadErr.message}`)
@@ -290,22 +307,30 @@ export default function UploadPage() {
             // 2. Database Insert (Chunked)
             const payload = file.name.endsWith(".pdf") ? [] : validatedData.valid
 
+            // 2a. Validate Payload Types
             if (payload.length > 0) {
+                const unknownTypes = payload.filter(p => !['CONTRIBUTION', 'EXPENDITURE'].includes(p.Rec_Type || ''))
+                if (unknownTypes.length > 0) {
+                    // If we have unknown types, we cannot blindly insert them into a column with a check constraint.
+                    // We must force them to valid types or fail. 
+                    // For now, fail and tell user to select a sheet type.
+                    throw new Error(`Found ${unknownTypes.length} records with Unknown/Invalid Transaction Type. Please select a valid Sheet Type (Contribution or Expenditure) in the Map step.`)
+                }
+            }
+
+            if (payload.length > 0 || file.name.endsWith(".pdf")) {
+                // (Create filing even if PDF, just no transactions)
+
                 const BATCH_SIZE = 1000
                 const totalBatches = Math.ceil(payload.length / BATCH_SIZE)
-
-                // Create a placeholder filing record first? 
-                // The old 'actions' did this. We should probably recreate a minimal filing record to link transactions to.
-                // For now, let's just insert transactions assuming they might be linked later or just raw. 
-                // Actually, transactions usually need a 'filing_id'. 
-                // Let's create a 'filings' record first via client if RLS allows.
 
                 const { data: filingData, error: filingError } = await supabase
                     .from('filings')
                     .insert({
-                        filer_name: payload[0].Filer_NamL || 'Unknown Filer',
-                        status: 'PROCESSING',
-                        source_file_url: storagePath
+                        filer_name: payload.length > 0 ? (payload[0].Filer_NamL || 'Unknown Filer') : file.name,
+                        status: 'PENDING', // FIXED: Was 'PROCESSING' which violates schema
+                        source_file_url: storagePath,
+                        uploaded_by: user.id
                     })
                     .select()
                     .single()
@@ -316,13 +341,9 @@ export default function UploadPage() {
                 for (let i = 0; i < payload.length; i += BATCH_SIZE) {
                     setChunkProgress(`Importing batch ${Math.floor(i / BATCH_SIZE) + 1} of ${totalBatches}...`)
                     const batch = payload.slice(i, i + BATCH_SIZE).map(row => ({
-                        // Map Zod keys to DB keys if they differ. 
-                        // Our Zod schema uses 'Tran_NamL' etc which might match DB or legacy.
-                        // The DB schema in 'actions.ts' had lowercase snake_case columns.
-                        // We need to map Zod (PascalCase-ish) to DB (snake_case).
-
                         filing_id: filingId,
-                        transaction_type: row.Rec_Type || 'UNKNOWN',
+                        transaction_type: row.Rec_Type, // Validated above to be correct
+
                         entity_name: row.Entity_Name,
                         amount: row.Amount,
                         transaction_date: row.Tran_Date,
@@ -333,7 +354,6 @@ export default function UploadPage() {
                         contributor_employer: row.Tran_Emp,
                         contributor_occupation: row.Tran_Occ,
 
-                        // Add other fields as necessary from schema...
                         description: "Imported via Client Upload"
                     }))
 
@@ -342,19 +362,19 @@ export default function UploadPage() {
                         .insert(batch)
 
                     if (insertError) {
-                        // Compensation: Delete file? Or just stop?
                         throw new Error(`Batch insert failed: ${insertError.message}`)
                     }
                 }
             }
 
-            alert(`Success! processed file & imported ${payload.length} records.`)
+            alert(`Success! File uploaded & ${payload.length} records imported.`)
             setStep("UPLOAD")
             setFile(null)
             setProcessedSheets([])
+            setChunkProgress(null)
 
         } catch (err: any) {
-            console.error(err)
+            console.error("Upload Error:", err)
             setError(err.message)
 
             // Compensation: Clean up storage if DB failed?
@@ -364,7 +384,6 @@ export default function UploadPage() {
             }
         } finally {
             setIsProcessing(false)
-            setChunkProgress(null)
         }
     }
 
@@ -374,14 +393,14 @@ export default function UploadPage() {
     const renderUpload = () => (
         <div className="space-y-6">
             <div className="text-center space-y-2">
-                <h1 className="text-2xl font-bold text-slate-900">Upload Data</h1>
-                <p className="text-slate-500">Upload Excel/CSV files or PDF filings.</p>
+                <h1 className="text-2xl font-bold text-white">Upload Data</h1>
+                <p className="text-slate-400">Upload Excel/CSV files or PDF filings.</p>
             </div>
 
-            <Card
+            <GlassCard
                 className={cn(
-                    "border-2 border-dashed transition-all py-12 cursor-pointer",
-                    isDragging ? "border-blue-500 bg-blue-50" : "border-slate-200 hover:border-blue-400"
+                    "border-2 border-dashed transition-all py-12 cursor-pointer bg-white/5",
+                    isDragging ? "border-blue-500 bg-blue-500/10" : "border-white/10 hover:border-blue-400 hover:bg-white/10"
                 )}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
@@ -390,25 +409,25 @@ export default function UploadPage() {
             >
                 <div className="flex flex-col items-center text-center">
                     <input id="file-upload" type="file" className="hidden" accept=".xlsx,.xls,.csv,.pdf" onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
-                    <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center mb-4 text-slate-400">
+                    <div className="h-16 w-16 rounded-full bg-white/10 flex items-center justify-center mb-4 text-blue-400">
                         <Upload className="h-8 w-8" />
                     </div>
-                    <div className="text-slate-900 font-semibold mb-1">Click to upload or drag & drop</div>
-                    <div className="text-slate-500 text-sm">Supported: .xlsx, .csv, .pdf</div>
+                    <div className="text-white font-semibold mb-1">Click to upload or drag & drop</div>
+                    <div className="text-slate-400 text-sm">Supported: .xlsx, .csv, .pdf</div>
                 </div>
-            </Card>
+            </GlassCard>
 
             {/* If PDF, show ready state directly since no mapping needed */}
             {file && file.name.endsWith(".pdf") && (
-                <div className="bg-blue-50 p-4 rounded-lg flex items-center justify-between border border-blue-100">
+                <div className="bg-blue-500/10 p-4 rounded-lg flex items-center justify-between border border-blue-500/20">
                     <div className="flex items-center gap-3">
-                        <File className="h-8 w-8 text-blue-600" />
+                        <File className="h-8 w-8 text-blue-400" />
                         <div>
-                            <div className="font-semibold text-blue-900">{file.name}</div>
-                            <div className="text-sm text-blue-700">Ready to upload (PDF)</div>
+                            <div className="font-semibold text-blue-100">{file.name}</div>
+                            <div className="text-sm text-blue-300">Ready to upload (PDF)</div>
                         </div>
                     </div>
-                    <Button onClick={handleSubmit} disabled={isProcessing}>
+                    <Button onClick={handleSubmit} disabled={isProcessing} className="bg-blue-600 hover:bg-blue-500 text-white">
                         {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : "Upload PDF"}
                     </Button>
                 </div>
@@ -417,21 +436,21 @@ export default function UploadPage() {
     )
 
     const renderMap = () => {
-        if (!activeSheet) return <div>No data loaded.</div>
+        if (!activeSheet) return <div className="text-slate-400">No data loaded.</div>
 
         return (
             <div className="space-y-6">
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => setStep("UPLOAD")}><ArrowLeft className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => setStep("UPLOAD")} className="text-slate-400 hover:text-white hover:bg-white/10"><ArrowLeft className="h-4 w-4" /></Button>
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900">Map Columns</h1>
-                        <p className="text-slate-500">Configure mapping for each sheet</p>
+                        <h1 className="text-2xl font-bold text-white">Map Columns</h1>
+                        <p className="text-slate-400">Configure mapping for each sheet</p>
                     </div>
                 </div>
 
                 {/* Custom Tabs */}
                 {processedSheets.length > 0 && (
-                    <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
+                    <div className="flex flex-wrap gap-2 border-b border-white/10 pb-2">
                         {processedSheets.map((s, idx) => (
                             <button
                                 key={s.id}
@@ -439,17 +458,17 @@ export default function UploadPage() {
                                 className={cn(
                                     "px-4 py-2 rounded-t-lg text-sm font-medium transition-colors border-b-2",
                                     activeSheetIdx === idx
-                                        ? "border-blue-600 text-blue-700 bg-blue-50/50"
-                                        : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                                        ? "border-blue-500 text-blue-400 bg-blue-500/10"
+                                        : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/5"
                                 )}
                             >
                                 <div className="flex items-center gap-2">
                                     {s.name}
                                     <span className={cn(
                                         "text-[10px] px-1.5 py-0.5 rounded-full uppercase",
-                                        s.type === 'CONTRIBUTION' ? "bg-green-100 text-green-700" :
-                                            s.type === 'EXPENDITURE' ? "bg-orange-100 text-orange-700" :
-                                                "bg-slate-100 text-slate-500"
+                                        s.type === 'CONTRIBUTION' ? "bg-green-500/20 text-green-300" :
+                                            s.type === 'EXPENDITURE' ? "bg-orange-500/20 text-orange-300" :
+                                                "bg-slate-700 text-slate-300"
                                     )}>
                                         {s.type === 'UNKNOWN' ? '?' : s.type.slice(0, 3)}
                                     </span>
@@ -460,24 +479,24 @@ export default function UploadPage() {
                 )}
 
                 {/* Sheet Config Bar */}
-                <div className="flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-100">
+                <div className="flex items-center justify-between bg-white/5 p-3 rounded-lg border border-white/10">
                     <div className="flex items-center gap-3">
-                        <span className="text-sm font-medium text-slate-700">Sheet Type:</span>
+                        <span className="text-sm font-medium text-slate-300">Sheet Type:</span>
                         <Select
                             value={activeSheet.type}
                             onValueChange={(val: any) => updateSheetType(val)}
                         >
-                            <SelectTrigger className="w-[180px] bg-white h-8 text-xs text-slate-900 border-slate-300">
+                            <SelectTrigger className="w-[180px] bg-white/5 h-8 text-xs text-white border-white/10 focus:ring-blue-500/50">
                                 <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="bg-white text-slate-900 border-slate-200">
+                            <SelectContent className="bg-slate-900 text-white border-white/10">
                                 <SelectItem value="CONTRIBUTION">Contribution (Receipts)</SelectItem>
                                 <SelectItem value="EXPENDITURE">Expenditure (Payments)</SelectItem>
                                 <SelectItem value="UNKNOWN">Other / Unknown</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="text-xs text-slate-500">
+                    <div className="text-xs text-slate-400">
                         {activeSheet.rows.length} rows detected
                     </div>
                 </div>
@@ -485,42 +504,42 @@ export default function UploadPage() {
 
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {REQUIRED_FIELDS.map(field => (
-                        <Card key={field.key} className={cn("border-l-4", activeSheet.mapping[field.key] ? "border-l-green-500" : "border-l-slate-200")}>
-                            <CardHeader className="p-4 pb-2">
-                                <CardTitle className=" text-sm font-medium flex justify-between">
+                        <GlassCard key={field.key} className={cn("border-l-4", activeSheet.mapping[field.key] ? "border-l-green-500" : "border-l-slate-700")}>
+                            <GlassCardHeader className="p-4 pb-2">
+                                <GlassCardTitle className=" text-sm font-medium flex justify-between text-slate-200">
                                     {field.label}
-                                    {field.required && <span className="text-xs text-red-500 bg-red-50 px-2 py-0.5 rounded-full">Required</span>}
-                                </CardTitle>
-                                <CardDescription className="text-xs">{field.description}</CardDescription>
-                            </CardHeader>
-                            <CardContent className="p-4 pt-2">
+                                    {field.required && <span className="text-xs text-red-300 bg-red-500/20 px-2 py-0.5 rounded-full">Required</span>}
+                                </GlassCardTitle>
+                                <div className="text-xs text-slate-400">{field.description}</div>
+                            </GlassCardHeader>
+                            <GlassCardContent className="p-4 pt-2">
                                 <Select
                                     value={activeSheet.mapping[field.key] || "ignore"}
                                     onValueChange={(val) => updateMapping(field.key, val === "ignore" ? "" : val)}
                                 >
-                                    <SelectTrigger className="text-slate-900 border-slate-300">
+                                    <SelectTrigger className="text-white border-white/10 bg-white/5 focus:ring-blue-500/50">
                                         <SelectValue placeholder="Select column..." />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-white text-slate-900 border-slate-200">
+                                    <SelectContent className="bg-slate-900 text-white border-white/10">
                                         <SelectItem value="ignore" className="text-slate-400 font-medium">-- Unmapped --</SelectItem>
                                         {activeSheet.headers.map(h => (
-                                            <SelectItem key={h} value={h} className="text-slate-900">{h}</SelectItem>
+                                            <SelectItem key={h} value={h} className="text-white focus:bg-white/10">{h}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
-                            </CardContent>
-                        </Card>
+                            </GlassCardContent>
+                        </GlassCard>
                     ))}
                 </div>
 
-                <div className="flex justify-end gap-3 pt-6 border-t">
-                    <Button variant="outline" onClick={() => { setFile(null); setStep("UPLOAD"); }}>Cancel</Button>
+                <div className="flex justify-end gap-3 pt-6 border-t border-white/10">
+                    <Button variant="outline" onClick={() => { setFile(null); setStep("UPLOAD"); }} className="border-white/10 hover:bg-white/5 text-slate-300 hover:text-white">Cancel</Button>
                     <Button onClick={() => setStep("PREVIEW")} disabled={
                         processedSheets.some(s =>
                             s.type !== 'UNKNOWN' &&
                             REQUIRED_FIELDS.some(f => f.required && !s.mapping[f.key])
                         )
-                    }>
+                    } className="bg-blue-600 hover:bg-blue-500 text-white">
                         Next: Validate All <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                 </div>
@@ -531,48 +550,48 @@ export default function UploadPage() {
     const renderPreview = () => (
         <div className="space-y-6">
             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => setStep("MAP")}><ArrowLeft className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" onClick={() => setStep("MAP")} className="text-slate-400 hover:text-white hover:bg-white/10"><ArrowLeft className="h-4 w-4" /></Button>
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Validate Data</h1>
-                    <p className="text-slate-500">Aggregated results from {processedSheets.length} sheets</p>
+                    <h1 className="text-2xl font-bold text-white">Validate Data</h1>
+                    <p className="text-slate-400">Aggregated results from {processedSheets.length} sheets</p>
                 </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-                <Card className="bg-green-50 border-green-200">
-                    <CardContent className="p-6 flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                <GlassCard className="bg-green-500/5 border-green-500/20">
+                    <GlassCardContent className="p-6 flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-full bg-green-500/20 flex items-center justify-center text-green-400">
                             <Check className="h-6 w-6" />
                         </div>
                         <div>
-                            <div className="text-2xl font-bold text-green-900">{validatedData.valid.length}</div>
-                            <div className="text-sm text-green-700 font-medium">Valid Records</div>
-                            <div className="text-xs text-green-600 mt-1">Ready to import</div>
+                            <div className="text-2xl font-bold text-green-400">{validatedData.valid.length}</div>
+                            <div className="text-sm text-green-300 font-medium">Valid Records</div>
+                            <div className="text-xs text-green-500/70 mt-1">Ready to import</div>
                         </div>
-                    </CardContent>
-                </Card>
+                    </GlassCardContent>
+                </GlassCard>
 
-                <Card className={cn("border-2", validatedData.invalid.length > 0 ? "bg-red-50 border-red-200" : "bg-slate-50 border-slate-100")}>
-                    <CardContent className="p-6 flex items-center gap-4">
-                        <div className={cn("h-12 w-12 rounded-full flex items-center justify-center", validatedData.invalid.length > 0 ? "bg-red-100 text-red-600" : "bg-slate-200 text-slate-500")}>
+                <GlassCard className={cn("border-2", validatedData.invalid.length > 0 ? "bg-red-500/5 border-red-500/20" : "bg-white/5 border-white/10")}>
+                    <GlassCardContent className="p-6 flex items-center gap-4">
+                        <div className={cn("h-12 w-12 rounded-full flex items-center justify-center", validatedData.invalid.length > 0 ? "bg-red-500/20 text-red-400" : "bg-white/10 text-slate-400")}>
                             <AlertTriangle className="h-6 w-6" />
                         </div>
                         <div>
-                            <div className={cn("text-2xl font-bold", validatedData.invalid.length > 0 ? "text-red-900" : "text-slate-700")}>{validatedData.invalid.length}</div>
-                            <div className={cn("text-sm font-medium", validatedData.invalid.length > 0 ? "text-red-700" : "text-slate-500")}>Invalid Records</div>
-                            <div className={cn("text-xs mt-1", validatedData.invalid.length > 0 ? "text-red-600" : "text-slate-400")}>
+                            <div className={cn("text-2xl font-bold", validatedData.invalid.length > 0 ? "text-red-400" : "text-slate-300")}>{validatedData.invalid.length}</div>
+                            <div className={cn("text-sm font-medium", validatedData.invalid.length > 0 ? "text-red-300" : "text-slate-500")}>Invalid Records</div>
+                            <div className={cn("text-xs mt-1", validatedData.invalid.length > 0 ? "text-red-400/70" : "text-slate-600")}>
                                 {validatedData.invalid.length > 0 ? "Strict validation failed" : "Will be skipped"}
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
+                    </GlassCardContent>
+                </GlassCard>
             </div>
 
             {/* Invalid Reasons List */}
             {validatedData.invalid.length > 0 && (
-                <div className="border border-red-100 bg-red-50 rounded-lg p-4 max-h-40 overflow-auto">
-                    <h4 className="font-semibold text-red-800 text-sm mb-2">Errors Found:</h4>
-                    <ul className="text-xs text-red-700 space-y-1">
+                <div className="border border-red-500/20 bg-red-500/10 rounded-lg p-4 max-h-40 overflow-auto">
+                    <h4 className="font-semibold text-red-300 text-sm mb-2">Errors Found:</h4>
+                    <ul className="text-xs text-red-200/80 space-y-1">
                         {validatedData.invalid.slice(0, 10).map((inv, i) => (
                             <li key={i}>Row {inv.row} ({inv.sheet}): {inv.reason}</li>
                         ))}
@@ -583,32 +602,32 @@ export default function UploadPage() {
 
             {/* Valid Data Preview */}
             <div className="space-y-2">
-                <h3 className="font-semibold text-slate-900">Preview (First 5 Valid)</h3>
-                <div className="border rounded-lg overflow-auto max-h-60 bg-white">
-                    <table className="w-full text-sm text-center text-slate-900">
-                        <thead className="bg-slate-50 sticky top-0">
+                <h3 className="font-semibold text-white">Preview (First 5 Valid)</h3>
+                <div className="border border-white/10 rounded-lg overflow-auto max-h-60 bg-white/5">
+                    <table className="w-full text-sm text-center text-slate-300">
+                        <thead className="bg-white/10 sticky top-0 text-white">
                             <tr>
-                                {REQUIRED_FIELDS.map(f => <th key={f.key} className="px-3 py-2 border-b font-medium">{f.label}</th>)}
+                                {REQUIRED_FIELDS.map(f => <th key={f.key} className="px-3 py-2 border-b border-white/10 font-medium">{f.label}</th>)}
                             </tr>
                         </thead>
-                        <tbody className="divide-y">
+                        <tbody className="divide-y divide-white/5">
                             {validatedData.valid.slice(0, 5).map((row, i) => (
-                                <tr key={i}>
+                                <tr key={i} className="hover:bg-white/5 transition-colors">
                                     {REQUIRED_FIELDS.map(f => <td key={f.key} className="px-3 py-2">{row[f.key]}</td>)}
                                 </tr>
                             ))}
-                            {validatedData.valid.length === 0 && <tr><td colSpan={REQUIRED_FIELDS.length} className="py-4 text-slate-400">No valid data found</td></tr>}
+                            {validatedData.valid.length === 0 && <tr><td colSpan={REQUIRED_FIELDS.length} className="py-4 text-slate-500">No valid data found</td></tr>}
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-6 border-t">
-                <Button variant="outline" onClick={() => { setFile(null); setStep("MAP") }}>Back</Button>
+            <div className="flex justify-end gap-3 pt-6 border-t border-white/10">
+                <Button variant="outline" onClick={() => { setFile(null); setStep("MAP") }} className="border-white/10 hover:bg-white/5 text-slate-300 hover:text-white">Back</Button>
                 <Button
                     onClick={handleSubmit}
                     disabled={validatedData.valid.length === 0 || isProcessing}
-                    className="bg-green-600 hover:bg-green-700"
+                    className="bg-green-600 hover:bg-green-500 text-white"
                 >
                     {isProcessing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Database className="h-4 w-4 mr-2" />}
                     {isProcessing ? (chunkProgress || "Processing...") : `Import ${validatedData.valid.length} Records`}
@@ -616,7 +635,7 @@ export default function UploadPage() {
             </div>
 
             {error && (
-                <div className="p-4 bg-red-100 text-red-700 rounded-md border border-red-200 flex items-center gap-2">
+                <div className="p-4 bg-red-500/10 text-red-300 rounded-md border border-red-500/20 flex items-center gap-2">
                     <AlertCircle className="h-5 w-5" /> {error}
                 </div>
             )}

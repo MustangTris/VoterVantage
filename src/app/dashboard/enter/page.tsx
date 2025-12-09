@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { GlassCard, GlassCardHeader, GlassCardTitle, GlassCardContent } from "@/components/ui/glass-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -122,14 +122,14 @@ export default function EnterDataPage() {
     return (
         <div className="space-y-6 max-w-3xl mx-auto pb-12">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight text-slate-900">Enter Data</h1>
-                <p className="text-slate-500">
+                <h1 className="text-3xl font-bold tracking-tight text-white">Enter Data</h1>
+                <p className="text-slate-400">
                     Comprehensive manual entry API. Groups optional fields for efficiency.
                 </p>
             </div>
 
             {message && (
-                <div className={`p-4 rounded-lg flex items-center gap-2 ${message.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                <div className={`p-4 rounded-lg flex items-center gap-2 border backdrop-blur-md ${message.type === 'success' ? 'bg-green-500/10 text-green-300 border-green-500/20' : 'bg-red-500/10 text-red-300 border-red-500/20'}`}>
                     {message.type === 'success' ? <CheckCircle className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />}
                     <p>{message.text}</p>
                 </div>
@@ -138,20 +138,20 @@ export default function EnterDataPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
 
                 {/* 1. Core Transaction Details */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Core Details</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
+                <GlassCard>
+                    <GlassCardHeader>
+                        <GlassCardTitle>Core Details</GlassCardTitle>
+                    </GlassCardHeader>
+                    <GlassCardContent className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="profile">Filer Profile *</Label>
+                            <Label htmlFor="profile" className="text-slate-300">Filer Profile *</Label>
                             <Select value={selectedProfile} onValueChange={setSelectedProfile}>
-                                <SelectTrigger>
+                                <SelectTrigger className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:ring-blue-500/50">
                                     <SelectValue placeholder="Select who is filing..." />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="bg-slate-900 border-white/10 text-white">
                                     {profiles.map(p => (
-                                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                                        <SelectItem key={p.id} value={p.id} className="focus:bg-white/10 focus:text-white">{p.name}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
@@ -159,61 +159,68 @@ export default function EnterDataPage() {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Type *</Label>
-                                <div className="flex gap-2 p-1 bg-slate-100 rounded-lg">
+                                <Label className="text-slate-300">Type *</Label>
+                                <div className="flex gap-2 p-1 bg-white/5 rounded-lg border border-white/10">
                                     <button type="button" onClick={() => setTransactionType('CONTRIBUTION')}
-                                        className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${transactionType === 'CONTRIBUTION' ? 'bg-white shadow text-slate-900' : 'text-slate-500 hover:text-slate-900'}`}>
+                                        className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${transactionType === 'CONTRIBUTION' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
                                         Contribution
                                     </button>
                                     <button type="button" onClick={() => setTransactionType('EXPENDITURE')}
-                                        className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${transactionType === 'EXPENDITURE' ? 'bg-white shadow text-slate-900' : 'text-slate-500 hover:text-slate-900'}`}>
+                                        className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${transactionType === 'EXPENDITURE' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
                                         Expenditure
                                     </button>
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="date">Date *</Label>
-                                <Input id="date" type="date" value={date} onChange={e => setDate(e.target.value)} required />
+                                <Label htmlFor="date" className="text-slate-300">Date *</Label>
+                                <Input id="date" type="date" value={date} onChange={e => setDate(e.target.value)} required
+                                    className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-blue-500/50 [color-scheme:dark]" />
                             </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="amount">Amount ($) *</Label>
-                                <Input id="amount" type="number" step="0.01" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} required />
+                                <Label htmlFor="amount" className="text-slate-300">Amount ($) *</Label>
+                                <Input id="amount" type="number" step="0.01" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} required
+                                    className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-blue-500/50" />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="entity">Full Entity Name *</Label>
-                                <Input id="entity" placeholder="Full Legal Name" value={entityName} onChange={e => setEntityName(e.target.value)} required />
+                                <Label htmlFor="entity" className="text-slate-300">Full Entity Name *</Label>
+                                <Input id="entity" placeholder="Full Legal Name" value={entityName} onChange={e => setEntityName(e.target.value)} required
+                                    className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-blue-500/50" />
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
+                    </GlassCardContent>
+                </GlassCard>
 
                 {/* 2. Expanded Details (Accordion) */}
                 <Accordion type="multiple" className="space-y-4">
 
-                    <AccordionItem value="entity-details" className="border rounded-lg bg-white px-4">
-                        <AccordionTrigger className="hover:no-underline">
-                            <span className="font-semibold text-slate-700">Entity Details (Address, Job)</span>
+                    <AccordionItem value="entity-details" className="border border-white/10 rounded-lg bg-white/5 px-4">
+                        <AccordionTrigger className="hover:no-underline hover:text-white text-slate-300">
+                            <span className="font-semibold">Entity Details (Address, Job)</span>
                         </AccordionTrigger>
-                        <AccordionContent className="space-y-4 pt-4">
+                        <AccordionContent className="space-y-4 pt-4 border-t border-white/5">
                             <div className="grid grid-cols-3 gap-4">
                                 <div className="space-y-2">
-                                    <Label>First Name</Label>
-                                    <Input value={entityFirst} onChange={e => setEntityFirst(e.target.value)} placeholder="Optional" />
+                                    <Label className="text-slate-400">First Name</Label>
+                                    <Input value={entityFirst} onChange={e => setEntityFirst(e.target.value)} placeholder="Optional"
+                                        className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus-visible:ring-blue-500/50" />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Last Name</Label>
-                                    <Input value={entityLast} onChange={e => setEntityLast(e.target.value)} placeholder="Optional" />
+                                    <Label className="text-slate-400">Last Name</Label>
+                                    <Input value={entityLast} onChange={e => setEntityLast(e.target.value)} placeholder="Optional"
+                                        className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus-visible:ring-blue-500/50" />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Self Employed?</Label>
+                                    <Label className="text-slate-400">Self Employed?</Label>
                                     <Select value={selfEmployed} onValueChange={setSelfEmployed}>
-                                        <SelectTrigger><SelectValue /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="n">No</SelectItem>
-                                            <SelectItem value="y">Yes</SelectItem>
+                                        <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-slate-900 border-white/10 text-white">
+                                            <SelectItem value="n" className="focus:bg-white/10 focus:text-white">No</SelectItem>
+                                            <SelectItem value="y" className="focus:bg-white/10 focus:text-white">Yes</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -221,100 +228,116 @@ export default function EnterDataPage() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label>Occupation</Label>
-                                    <Input value={occupation} onChange={e => setOccupation(e.target.value)} />
+                                    <Label className="text-slate-400">Occupation</Label>
+                                    <Input value={occupation} onChange={e => setOccupation(e.target.value)}
+                                        className="bg-white/5 border-white/10 text-white focus-visible:ring-blue-500/50" />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Employer</Label>
-                                    <Input value={employer} onChange={e => setEmployer(e.target.value)} />
+                                    <Label className="text-slate-400">Employer</Label>
+                                    <Input value={employer} onChange={e => setEmployer(e.target.value)}
+                                        className="bg-white/5 border-white/10 text-white focus-visible:ring-blue-500/50" />
                                 </div>
                             </div>
 
                             <div className="space-y-2">
-                                <Label>Address Line 1</Label>
-                                <Input value={entityAdr1} onChange={e => setEntityAdr1(e.target.value)} />
+                                <Label className="text-slate-400">Address Line 1</Label>
+                                <Input value={entityAdr1} onChange={e => setEntityAdr1(e.target.value)}
+                                    className="bg-white/5 border-white/10 text-white focus-visible:ring-blue-500/50" />
                             </div>
                             <div className="grid grid-cols-3 gap-4">
                                 <div className="space-y-2">
-                                    <Label>City</Label>
-                                    <Input value={entityCity} onChange={e => setEntityCity(e.target.value)} />
+                                    <Label className="text-slate-400">City</Label>
+                                    <Input value={entityCity} onChange={e => setEntityCity(e.target.value)}
+                                        className="bg-white/5 border-white/10 text-white focus-visible:ring-blue-500/50" />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>State</Label>
-                                    <Input value={entityState} onChange={e => setEntityState(e.target.value)} maxLength={2} />
+                                    <Label className="text-slate-400">State</Label>
+                                    <Input value={entityState} onChange={e => setEntityState(e.target.value)} maxLength={2}
+                                        className="bg-white/5 border-white/10 text-white focus-visible:ring-blue-500/50" />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Zip</Label>
-                                    <Input value={entityZip} onChange={e => setEntityZip(e.target.value)} />
+                                    <Label className="text-slate-400">Zip</Label>
+                                    <Input value={entityZip} onChange={e => setEntityZip(e.target.value)}
+                                        className="bg-white/5 border-white/10 text-white focus-visible:ring-blue-500/50" />
                                 </div>
                             </div>
                         </AccordionContent>
                     </AccordionItem>
 
-                    <AccordionItem value="treasurer" className="border rounded-lg bg-white px-4">
-                        <AccordionTrigger className="hover:no-underline">
-                            <span className="font-semibold text-slate-700">Committee / Treasurer Details</span>
+                    <AccordionItem value="treasurer" className="border border-white/10 rounded-lg bg-white/5 px-4">
+                        <AccordionTrigger className="hover:no-underline hover:text-white text-slate-300">
+                            <span className="font-semibold">Committee / Treasurer Details</span>
                         </AccordionTrigger>
-                        <AccordionContent className="space-y-4 pt-4">
+                        <AccordionContent className="space-y-4 pt-4 border-t border-white/5">
                             <div className="space-y-2">
-                                <Label>Committee ID (FPPC)</Label>
-                                <Input value={cmteId} onChange={e => setCmteId(e.target.value)} placeholder="123456" />
+                                <Label className="text-slate-400">Committee ID (FPPC)</Label>
+                                <Input value={cmteId} onChange={e => setCmteId(e.target.value)} placeholder="123456"
+                                    className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus-visible:ring-blue-500/50" />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label>Treasurer First Name</Label>
-                                    <Input value={treasurerFirst} onChange={e => setTreasurerFirst(e.target.value)} />
+                                    <Label className="text-slate-400">Treasurer First Name</Label>
+                                    <Input value={treasurerFirst} onChange={e => setTreasurerFirst(e.target.value)}
+                                        className="bg-white/5 border-white/10 text-white focus-visible:ring-blue-500/50" />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Treasurer Last Name</Label>
-                                    <Input value={treasurerLast} onChange={e => setTreasurerLast(e.target.value)} />
+                                    <Label className="text-slate-400">Treasurer Last Name</Label>
+                                    <Input value={treasurerLast} onChange={e => setTreasurerLast(e.target.value)}
+                                        className="bg-white/5 border-white/10 text-white focus-visible:ring-blue-500/50" />
                                 </div>
                             </div>
                             <div className="grid grid-cols-3 gap-4">
                                 <div className="space-y-2">
-                                    <Label>City</Label>
-                                    <Input value={treasurerCity} onChange={e => setTreasurerCity(e.target.value)} />
+                                    <Label className="text-slate-400">City</Label>
+                                    <Input value={treasurerCity} onChange={e => setTreasurerCity(e.target.value)}
+                                        className="bg-white/5 border-white/10 text-white focus-visible:ring-blue-500/50" />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>State</Label>
-                                    <Input value={treasurerState} onChange={e => setTreasurerState(e.target.value)} />
+                                    <Label className="text-slate-400">State</Label>
+                                    <Input value={treasurerState} onChange={e => setTreasurerState(e.target.value)}
+                                        className="bg-white/5 border-white/10 text-white focus-visible:ring-blue-500/50" />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Zip</Label>
-                                    <Input value={treasurerZip} onChange={e => setTreasurerZip(e.target.value)} />
+                                    <Label className="text-slate-400">Zip</Label>
+                                    <Input value={treasurerZip} onChange={e => setTreasurerZip(e.target.value)}
+                                        className="bg-white/5 border-white/10 text-white focus-visible:ring-blue-500/50" />
                                 </div>
                             </div>
                         </AccordionContent>
                     </AccordionItem>
 
-                    <AccordionItem value="admin" className="border rounded-lg bg-white px-4">
-                        <AccordionTrigger className="hover:no-underline">
-                            <span className="font-semibold text-slate-700">Administrative / Codes</span>
+                    <AccordionItem value="admin" className="border border-white/10 rounded-lg bg-white/5 px-4">
+                        <AccordionTrigger className="hover:no-underline hover:text-white text-slate-300">
+                            <span className="font-semibold">Administrative / Codes</span>
                         </AccordionTrigger>
-                        <AccordionContent className="space-y-4 pt-4">
+                        <AccordionContent className="space-y-4 pt-4 border-t border-white/5">
                             <div className="grid grid-cols-3 gap-4">
                                 <div className="space-y-2">
-                                    <Label>Expenditure Code</Label>
-                                    <Input value={expenditureCode} onChange={e => setExpenditureCode(e.target.value)} placeholder="CMP, LIT..." />
+                                    <Label className="text-slate-400">Expenditure Code</Label>
+                                    <Input value={expenditureCode} onChange={e => setExpenditureCode(e.target.value)} placeholder="CMP, LIT..."
+                                        className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus-visible:ring-blue-500/50" />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Memo Code</Label>
-                                    <Input value={memoCode} onChange={e => setMemoCode(e.target.value)} />
+                                    <Label className="text-slate-400">Memo Code</Label>
+                                    <Input value={memoCode} onChange={e => setMemoCode(e.target.value)}
+                                        className="bg-white/5 border-white/10 text-white focus-visible:ring-blue-500/50" />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Ref No</Label>
-                                    <Input value={memoRefNo} onChange={e => setMemoRefNo(e.target.value)} />
+                                    <Label className="text-slate-400">Ref No</Label>
+                                    <Input value={memoRefNo} onChange={e => setMemoRefNo(e.target.value)}
+                                        className="bg-white/5 border-white/10 text-white focus-visible:ring-blue-500/50" />
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="description">Description / Memo</Label>
-                                <Textarea id="description" value={description} onChange={e => setDescription(e.target.value)} className="h-20" />
+                                <Label htmlFor="description" className="text-slate-300">Description / Memo</Label>
+                                <Textarea id="description" value={description} onChange={e => setDescription(e.target.value)}
+                                    className="h-20 bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus-visible:ring-blue-500/50" />
                             </div>
                         </AccordionContent>
                     </AccordionItem>
                 </Accordion>
 
-                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 py-6 text-lg" disabled={submitting}>
+                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 py-6 text-lg shadow-lg shadow-blue-900/20" disabled={submitting}>
                     {submitting ? 'Saving Transaction...' : 'Save Complete Record'}
                 </Button>
             </form>

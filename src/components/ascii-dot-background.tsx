@@ -34,13 +34,13 @@ export const AsciiDotBackground = () => {
             <style jsx global>{`
         @keyframes wave {
           0%, 100% {
-            opacity: 0.2;
-            transform: scale(0.8);
+            opacity: 0.1;
+            transform: scale(0.6);
             color: #4c1d95; /* Deep purple */
           }
           50% {
             opacity: 1;
-            transform: scale(1.2);
+            transform: scale(1.4);
             color: #a78bfa; /* Light purple */
           }
         }
@@ -49,7 +49,7 @@ export const AsciiDotBackground = () => {
           width: 1ch;
           height: 1ch;
           font-family: monospace;
-          animation: wave 4s ease-in-out infinite;
+          animation: wave 3s ease-in-out infinite;
         }
       `}</style>
         </div>
