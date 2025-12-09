@@ -18,11 +18,11 @@ export function Footer() {
                                     className="relative h-full w-full object-contain drop-shadow-[0_0_15px_rgba(168,85,247,0.6)]"
                                 />
                             </div>
-                            <div className="flex flex-col leading-none justify-center">
-                                <span className="text-xl font-extrabold uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-100 to-purple-500 drop-shadow-[0_0_15px_rgba(192,132,252,0.6)]">
+                            <div className="flex flex-row items-center gap-1 leading-none justify-center ml-1">
+                                <span className="text-xl font-extrabold uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-purple-400 to-purple-600 drop-shadow-[0_0_15px_rgba(168,85,247,0.6)]">
                                     Voter
                                 </span>
-                                <span className="text-[0.65rem] font-light uppercase tracking-[0.3em] text-purple-200/90 ml-[2px] drop-shadow-[0_0_5px_rgba(192,132,252,0.4)]">
+                                <span className="text-xl font-bold uppercase tracking-tight text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.4)]">
                                     Vantage
                                 </span>
                             </div>

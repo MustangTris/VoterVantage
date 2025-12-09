@@ -20,8 +20,9 @@ export interface LandingStats {
 
 // Cache the results to avoid hitting DB on every render if called multiple times
 export const getLandingPageStats = cache(async (): Promise<LandingStats> => {
-    const client = await pool.connect()
+    let client;
     try {
+        client = await pool.connect()
         // Count cities (profiles where type = 'CITY')
         const citiesRes = await client.query("SELECT COUNT(*) FROM profiles WHERE type = 'CITY'")
         const citiesCount = parseInt(citiesRes.rows[0].count, 10)
@@ -39,13 +40,14 @@ export const getLandingPageStats = cache(async (): Promise<LandingStats> => {
         console.error("Error fetching landing page stats:", error)
         return { citiesCount: 0, candidatesCount: 0, volunteersCount: 100 }
     } finally {
-        client.release()
+        if (client) client.release()
     }
 })
 
 export const getCityStats = cache(async (cityName: string): Promise<CityStats> => {
-    const client = await pool.connect()
+    let client;
     try {
+        client = await pool.connect()
         // 1. Total Raised: Sum contributions for profiles in this city
         // We link transactions -> filings -> profiles(filer) -> city
         // OR transactions with entity_profile_id if we want recipient side?
@@ -178,6 +180,6 @@ export const getCityStats = cache(async (cityName: string): Promise<CityStats> =
             donorComposition: []
         }
     } finally {
-        client.release()
+        if (client) client.release()
     }
 })

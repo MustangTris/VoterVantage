@@ -5,8 +5,9 @@ import { auth } from '@/auth'
 import { revalidatePath } from 'next/cache'
 
 export async function getProfiles() {
-    const client = await pool.connect()
+    let client;
     try {
+        client = await pool.connect()
         const result = await client.query(`
             SELECT id, name, type, city 
             FROM profiles 
@@ -17,7 +18,7 @@ export async function getProfiles() {
         console.error('Error fetching profiles:', error)
         return { success: false, error: 'Failed to fetch profiles' }
     } finally {
-        client.release()
+        if (client) client.release()
     }
 }
 
@@ -78,8 +79,9 @@ export async function saveManualTransaction(data: ManualTransactionData) {
         return { success: false, error: 'Not authenticated' }
     }
 
-    const client = await pool.connect()
+    let client;
     try {
+        client = await pool.connect()
         await client.query('BEGIN')
 
         // 1. Resolve Profile and Filing
@@ -174,10 +176,10 @@ export async function saveManualTransaction(data: ManualTransactionData) {
 
         return { success: true }
     } catch (error) {
-        await client.query('ROLLBACK')
+        if (client) await client.query('ROLLBACK')
         console.error('Error saving manual transaction:', error)
         return { success: false, error: 'Failed to save transaction' }
     } finally {
-        client.release()
+        if (client) client.release()
     }
 }

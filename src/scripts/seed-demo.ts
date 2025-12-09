@@ -16,6 +16,7 @@ try {
         });
     }
 } catch (e) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     console.warn("Could not read .env.local", e);
 }
 
@@ -29,7 +30,8 @@ async function main() {
     const client = await pool.connect();
     try {
         // Upsert Mayor Johnson
-        const res = await client.query(`
+        // Upsert Mayor Johnson
+        await client.query(`
             INSERT INTO profiles (name, type, description, image_url)
             VALUES ($1, $2, $3, $4)
             ON CONFLICT (filer_id) DO UPDATE 
