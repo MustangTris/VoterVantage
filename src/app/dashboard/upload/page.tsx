@@ -269,7 +269,18 @@ export default function UploadPage() {
                     const zodResult = TransactionSchema.safeParse(cleanedForZod)
 
                     if (!zodResult.success) {
-                        const issues = (zodResult.error as any).errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ')
+                        let issues = "Validation Failed"
+                        // Safer error extraction
+                        if (zodResult.error && 'errors' in zodResult.error && Array.isArray(zodResult.error.errors)) {
+                            issues = zodResult.error.errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ')
+                        } else if (zodResult.error instanceof Error) {
+                            issues = zodResult.error.message
+                        } else {
+                            try {
+                                issues = JSON.stringify(zodResult.error)
+                            } catch (e) { issues = "Unknown validation error object" }
+                        }
+
                         invalid.push({ sheet: sheet.name, row: idx + 2, reason: issues, data: row })
                     } else if (missingFields.length > 0) {
                         invalid.push({ sheet: sheet.name, row: idx + 2, reason: `Missing: ${missingFields.join(", ")}`, data: row })
