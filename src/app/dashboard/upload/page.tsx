@@ -13,6 +13,7 @@ import { DebugConsole } from "@/components/debug-console"
 import { createClient } from "@/lib/supabase/client"
 import { TransactionSchema, cleanRow } from "@/lib/validators/transaction"
 import { authAction } from "./actions"
+import { createFilingHeader, importTransactionBatch } from "./server-actions"
 
 // --- Configuration ---
 type FieldDefinition = {
@@ -410,38 +411,34 @@ export default function UploadPage() {
             if (payload.length > 0) {
                 const unknownTypes = payload.filter(p => !['CONTRIBUTION', 'EXPENDITURE'].includes(p.Rec_Type || ''))
                 if (unknownTypes.length > 0) {
-                    // If we have unknown types, we cannot blindly insert them into a column with a check constraint.
-                    // We must force them to valid types or fail. 
-                    // For now, fail and tell user to select a sheet type.
                     throw new Error(`Found ${unknownTypes.length} records with Unknown/Invalid Transaction Type. Please select a valid Sheet Type (Contribution or Expenditure) in the Map step.`)
                 }
             }
 
             if (payload.length > 0 || file.name.endsWith(".pdf")) {
-                // (Create filing even if PDF, just no transactions)
-
                 const BATCH_SIZE = 1000
                 const totalBatches = Math.ceil(payload.length / BATCH_SIZE)
 
-                const { data: filingData, error: filingError } = await supabase
-                    .from('filings')
-                    .insert({
-                        filer_name: payload.length > 0 ? (payload[0].Filer_NamL || 'Unknown Filer') : file.name,
-                        status: 'PENDING', // FIXED: Was 'PROCESSING' which violates schema
-                        source_file_url: storagePath,
-                        uploaded_by: userId
-                    })
-                    .select()
-                    .single()
+                // 2b. Create Filing Header via Server Action
 
-                if (filingError) throw new Error(`Failed to create filing: ${filingError.message}`)
-                const filingId = filingData.id
 
+                const filingResult = await createFilingHeader({
+                    filer_name: payload.length > 0 ? (payload[0].Filer_NamL || 'Unknown Filer') : file.name,
+                    source_file_url: storagePath,
+                    uploaded_by: userId
+                })
+
+                if (!filingResult.success || !filingResult.filingId) {
+                    throw new Error(`Failed to create filing: ${filingResult.error}`)
+                }
+                const filingId = filingResult.filingId
+
+                // 2c. Import Batches via Server Action
                 for (let i = 0; i < payload.length; i += BATCH_SIZE) {
                     setChunkProgress(`Importing batch ${Math.floor(i / BATCH_SIZE) + 1} of ${totalBatches}...`)
                     const batch = payload.slice(i, i + BATCH_SIZE).map(row => ({
                         filing_id: filingId,
-                        transaction_type: row.Rec_Type, // Validated above to be correct
+                        transaction_type: row.Rec_Type,
 
                         entity_name: row.Entity_Name,
                         amount: row.Amount,
@@ -456,12 +453,10 @@ export default function UploadPage() {
                         description: "Imported via Client Upload"
                     }))
 
-                    const { error: insertError } = await supabase
-                        .from('transactions')
-                        .insert(batch)
+                    const batchResult = await importTransactionBatch(filingId, batch)
 
-                    if (insertError) {
-                        throw new Error(`Batch insert failed: ${insertError.message}`)
+                    if (!batchResult.success) {
+                        throw new Error(`Batch insert failed: ${batchResult.error}`)
                     }
                 }
             }

@@ -18,7 +18,7 @@ export default async function Home() {
       <div className="absolute bottom-[-10%] left-[20%] w-[60%] h-[60%] rounded-full bg-indigo-900/20 blur-[120px] pointer-events-none" />
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 px-4">
+      <section className="relative pt-12 pb-20 md:pt-20 md:pb-32 px-4">
         <div className="container mx-auto flex flex-col items-center text-center relative z-10">
 
           {/* Logo and Text */}
@@ -28,7 +28,7 @@ export default async function Home() {
               <img
                 src="/logo.png"
                 alt="VoterVantage Logo"
-                className="w-48 h-48 md:w-64 md:h-64 object-contain group-hover:drop-shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all duration-500"
+                className="w-64 h-64 md:w-[500px] md:h-[500px] object-contain group-hover:drop-shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all duration-500"
               />
             </div>
 
