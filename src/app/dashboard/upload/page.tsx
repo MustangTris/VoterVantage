@@ -219,12 +219,23 @@ export default function UploadPage() {
     const validatedData = useMemo(() => {
         const valid: any[] = []
         const invalid: { sheet: string, row: number, reason: string, data: any }[] = []
+        let debugError: string | null = null
+
+        const debugInfo = {
+            sheetCount: processedSheets.length,
+            totalRows: 0,
+            rowsProcessed: 0
+        }
 
         try {
+            console.log("Starting validation...", processedSheets)
             processedSheets.forEach(sheet => {
                 const { mapping, rows, type } = sheet
+                console.log(`Processing sheet ${sheet.name} with ${rows?.length} rows`)
+                debugInfo.totalRows += rows?.length || 0
 
                 rows.forEach((row, idx) => {
+                    debugInfo.rowsProcessed++
                     const mappedRow: any = {}
                     const missingFields: string[] = []
 
@@ -269,11 +280,12 @@ export default function UploadPage() {
             })
         } catch (err: any) {
             console.error("Critical Validation Error:", err)
+            debugError = err.message || "Unknown validation error"
             // If the whole loop crashes, we can't do much but return what we have or an empty set, 
             // but at least we don't crash the React tree.
         }
 
-        return { valid, invalid }
+        return { valid, invalid, debugError, debugInfo }
     }, [processedSheets])
 
 
@@ -637,6 +649,21 @@ export default function UploadPage() {
             {error && (
                 <div className="p-4 bg-red-500/10 text-red-300 rounded-md border border-red-500/20 flex items-center gap-2">
                     <AlertCircle className="h-5 w-5" /> {error}
+                </div>
+            )}
+
+            {(validatedData as any).debugError && (
+                <div className="p-4 bg-red-500/10 text-red-300 rounded-md border border-red-500/20 flex items-center gap-2 mt-2">
+                    <AlertCircle className="h-5 w-5" /> Validation Crash: {(validatedData as any).debugError}
+                </div>
+            )}
+
+            {(validatedData as any).debugInfo && (
+                <div className="mt-4 p-4 bg-blue-500/10 text-blue-300 rounded-md border border-blue-500/20 text-xs font-mono">
+                    <div className="font-bold mb-1">Debug Info:</div>
+                    <div>Sheets: {(validatedData as any).debugInfo.sheetCount}</div>
+                    <div>Total Rows: {(validatedData as any).debugInfo.totalRows}</div>
+                    <div>Processed: {(validatedData as any).debugInfo.rowsProcessed}</div>
                 </div>
             )}
         </div>
