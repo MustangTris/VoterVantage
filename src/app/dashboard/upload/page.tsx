@@ -383,17 +383,24 @@ export default function UploadPage() {
             }
             const userId = authResult.userId
 
-            // 1. Archival: Upload Raw File
-            const fileExt = file.name.split('.').pop()
-            const fileName = `raw_uploads/${Date.now()}_${file.name.replace(/[^a-z0-9.]/gi, '_')}`
+            // 1. Archival: Upload Raw File via API (handles RLS with service role)
+            setChunkProgress("Uploading file to storage...")
 
-            const { data: uploadData, error: uploadErr } = await supabase.storage
-                .from('filings')
-                .upload(fileName, file)
+            const formData = new FormData()
+            formData.append('file', file)
 
-            if (uploadErr) throw new Error(`Storage upload failed: ${uploadErr.message}`)
+            const uploadResponse = await fetch('/api/upload-file', {
+                method: 'POST',
+                body: formData
+            })
 
-            storagePath = fileName
+            if (!uploadResponse.ok) {
+                const errorData = await uploadResponse.json()
+                throw new Error(errorData.error || 'File upload failed')
+            }
+
+            const uploadResult = await uploadResponse.json()
+            storagePath = uploadResult.filePath
             setChunkProgress("File archived. Starting import...")
 
             // 2. Database Insert (Chunked)

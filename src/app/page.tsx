@@ -21,14 +21,36 @@ export default async function Home() {
       <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 px-4">
         <div className="container mx-auto flex flex-col items-center text-center relative z-10">
 
-          {/* Pill Badge */}
-          <div className="inline-flex items-center rounded-full glass-panel px-4 py-1.5 text-sm font-medium text-purple-200 mb-8 border-purple-500/30">
-            <span className="flex h-2 w-2 rounded-full bg-purple-400 mr-2 shadow-[0_0_10px_rgba(192,132,252,0.8)]"></span>
-            Informed and Free, Together We Shape Democracy
+          {/* Enhanced Glass Card with Logo Overlay */}
+          <div className="relative mb-12 group">
+            {/* Background Glass Card */}
+            <div className="glass-panel relative rounded-3xl px-12 py-8 md:px-16 md:py-12 border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-transparent backdrop-blur-xl shadow-2xl hover:shadow-purple-500/20 transition-all duration-500">
+
+              {/* Large Transparent Logo Overlay */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+                <div className="relative">
+                  <img
+                    src="/logo.png"
+                    alt="VoterVantage Logo"
+                    className="w-48 h-48 md:w-64 md:h-64 object-contain opacity-40 group-hover:opacity-50 transition-opacity duration-500 drop-shadow-[0_0_30px_rgba(168,85,247,0.3)]"
+                  />
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="relative z-10">
+                <h2 className="text-2xl md:text-3xl font-bold text-white mb-3 tracking-wide">
+                  VoterVantage
+                </h2>
+                <p className="text-base md:text-lg text-purple-200 font-medium tracking-wide max-w-md mx-auto">
+                  Informed and Free, Together We Shape Democracy
+                </p>
+              </div>
+            </div>
           </div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 leading-tight">
-            Follow the <TextCarousel words={["Money", "Politicians", "Cities", "Lobby Groups"]} className="text-purple-400 mx-2" /> in <br className="hidden md:inline" />
+            Follow the <TextCarousel words={["Money", "Politicians", "Cities", "Lobbyists"]} className="text-purple-400 mx-2" /> in <br className="hidden md:inline" />
             <span className="text-gradient drop-shadow-sm">
               City Politics
             </span>
@@ -99,7 +121,7 @@ export default async function Home() {
               </div>
               <h3 className="text-xl font-semibold text-white mb-3">Detailed Profiles</h3>
               <p className="text-slate-400 leading-relaxed">
-                Deep dives into every candidate and lobbying group. See complete financial backer breakdowns on our dashboards.
+                Deep dives into every candidate and lobbyist. See complete financial backer breakdowns on our dashboards.
               </p>
             </div>
 
