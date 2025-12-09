@@ -3,7 +3,9 @@ import { Geist, Geist_Mono, UnifrakturMaguntia, Playfair_Display } from "next/fo
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { DonationModal } from "@/components/donation-modal";
+import { DonationSection } from "@/components/donation-section";
 import { Toaster } from "@/components/ui/toaster";
+import { AsciiDotBackground } from "@/components/ascii-dot-background";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -42,10 +44,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${unifraktur.variable} ${playfair.variable} antialiased min-h-screen bg-background text-foreground font-sans selection:bg-purple-500/30 flex flex-col`}
       >
+        <AsciiDotBackground />
         <Navbar />
         <main className="flex-1">
           {children}
         </main>
+        <DonationSection />
         <Footer />
         <DonationModal />
         <Toaster />

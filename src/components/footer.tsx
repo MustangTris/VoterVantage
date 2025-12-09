@@ -57,9 +57,17 @@ export function Footer() {
                 </div>
 
                 <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <p className="text-xs text-slate-500">
-                        © {new Date().getFullYear()} VoterVantage. All rights reserved.
-                    </p>
+                    <div className="flex flex-col md:flex-row justify-between items-center w-full gap-4">
+                        <div className="flex flex-col gap-1">
+                            <p className="text-xs text-slate-500">
+                                © {new Date().getFullYear()} VoterVantage. All rights reserved.
+                            </p>
+                            <p className="text-[10px] text-slate-600 max-w-xl">
+                                VoterVantage is a 501(c)(3) non-profit organization. Information provided is for educational and non-partisan purposes.
+                                We do not endorse or oppose any candidate for public office.
+                            </p>
+                        </div>
+                    </div>
                     <div className="flex gap-6">
                         {/* Social placeholders could go here */}
                     </div>

@@ -67,15 +67,25 @@ export default function PrivacyPolicy() {
 
                 <h2 className="text-2xl font-semibold mt-8 mb-4">3. Sharing Your Information</h2>
                 <p>We do not sell your personal information. We may share your data in the following limited circumstances:</p>
+
+                <h3 className="text-xl font-medium mt-4 mb-2">a. Vendor & Service Providers</h3>
                 <ul className="list-disc pl-6 space-y-2">
                     <li>
-                        <strong>Service Providers:</strong> With trusted third parties who perform services on our behalf, such as website hosting or analytics.
+                        With trusted third parties who perform services on our behalf, such as website hosting or analytics.
                     </li>
+                </ul>
+
+                <h3 className="text-xl font-medium mt-4 mb-2">b. Donor Privacy (501(c)(3) Policy)</h3>
+                <ul className="list-disc pl-6 space-y-2">
                     <li>
-                        <strong>Legal Requirements:</strong> When required to comply with legal obligations, protect rights, or ensure safety.
+                        As a 501(c)(3) non-profit, we hold donor information in strict confidence. We will not sell, trade, or share a donor's personal information with anyone else, nor send donor mailings on behalf of other organizations, unless we have specific permission from the donor to do so.
                     </li>
+                </ul>
+
+                <h3 className="text-xl font-medium mt-4 mb-2">c. Legal Requirements</h3>
+                <ul className="list-disc pl-6 space-y-2">
                     <li>
-                        <strong>Consent:</strong> When you have given explicit consent for us to share your information.
+                        When required to comply with legal obligations, protect rights, or ensure safety.
                     </li>
                 </ul>
 

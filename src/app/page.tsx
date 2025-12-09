@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { RotatingText } from "@/components/rotating-text"
+import { TextCarousel } from "@/components/text-carousel"
+
 import { getLandingPageStats } from "@/app/actions/stats"
 
 import { ArrowRight, BarChart3, FileSearch, Users } from "lucide-react"
@@ -27,7 +28,7 @@ export default async function Home() {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 leading-tight">
-            Follow the <span className="inline-block transform -rotate-2 relative top-2 mx-2"><RotatingText /></span> in <br className="hidden md:inline" />
+            Follow the <TextCarousel words={["Money", "Politicians", "Cities", "Lobby Groups"]} className="text-purple-400 mx-2" /> in <br className="hidden md:inline" />
             <span className="text-gradient drop-shadow-sm">
               City Politics
             </span>
@@ -124,33 +125,6 @@ export default async function Home() {
           </div>
         </div>
       </section>
-
-      {/* CTA Section */}
-      <section className="py-24 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-t from-purple-900/20 to-transparent pointer-events-none" />
-
-        <div className="container mx-auto px-4 relative z-10 text-center">
-          <div className="glass-panel max-w-4xl mx-auto rounded-3xl p-12 md:p-16 border-purple-500/20 bg-gradient-to-b from-white/5 to-transparent">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">
-              We give you the tools to light the way
-            </h2>
-            <p className="text-lg text-slate-300 mb-10 max-w-2xl mx-auto italic">
-              "Your support fuels us every day."
-            </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Link href="/dashboard">
-                <Button size="lg" className="glass-button h-12 px-8 rounded-full border-purple-500/50 hover:bg-purple-500/20">
-                  Join as a Volunteer
-                </Button>
-              </Link>
-              <Link href="/donate">
-                <Button variant="outline" size="lg" className="h-12 px-8 rounded-full border-white/10 bg-transparent text-white hover:bg-white/10">
-                  Donate
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>      </section>
 
     </div>
   )

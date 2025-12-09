@@ -18,7 +18,18 @@ export default function TermsOfService() {
                 </section>
 
                 <section>
-                    <h2 className="text-2xl font-semibold mb-4 text-purple-400">2. Use of Services</h2>
+                    <h2 className="text-2xl font-semibold mb-4 text-purple-400">2. Non-Profit Status & Non-Partisanship</h2>
+                    <p className="mb-4">
+                        VoterVantage is a recognized 501(c)(3) non-profit organization dedicated to increasing transparency in local politics.
+                    </p>
+                    <ul className="list-disc pl-5 space-y-1">
+                        <li><strong>Non-Partisan Mission:</strong> We do not endorse, oppose, or contribute to any candidate for public office or any political party.</li>
+                        <li><strong>Educational Purpose:</strong> All information provided on this platform is for educational and informational purposes only.</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2 className="text-2xl font-semibold mb-4 text-purple-400">3. Use of Services</h2>
 
                     <h3 className="text-lg font-medium mb-2 text-white">a. Eligibility</h3>
                     <ul className="list-disc pl-5 mb-4 space-y-1">
@@ -34,7 +45,7 @@ export default function TermsOfService() {
                 </section>
 
                 <section>
-                    <h2 className="text-2xl font-semibold mb-4 text-purple-400">3. Intellectual Property</h2>
+                    <h2 className="text-2xl font-semibold mb-4 text-purple-400">4. Intellectual Property</h2>
                     <ul className="list-disc pl-5 space-y-2">
                         <li>All content on the VoterVantage website, including text, graphics, logos, and software, is provided to support public awareness and engagement.</li>
                         <li>You are free to reproduce, distribute, or modify our content for non-commercial purposes, provided that you give proper credit to VoterVantage and do not misrepresent the information.</li>
@@ -43,7 +54,7 @@ export default function TermsOfService() {
                 </section>
 
                 <section>
-                    <h2 className="text-2xl font-semibold mb-4 text-purple-400">4. User-Generated Content</h2>
+                    <h2 className="text-2xl font-semibold mb-4 text-purple-400">5. User-Generated Content</h2>
 
                     <h3 className="text-lg font-medium mb-2 text-white">a. Ownership</h3>
                     <ul className="list-disc pl-5 mb-4 space-y-1">
@@ -58,7 +69,7 @@ export default function TermsOfService() {
                 </section>
 
                 <section>
-                    <h2 className="text-2xl font-semibold mb-4 text-purple-400">5. Privacy</h2>
+                    <h2 className="text-2xl font-semibold mb-4 text-purple-400">6. Privacy</h2>
                     <p>
                         Your use of our platform is also governed by our <Link href="/privacy-policy" className="text-blue-400 hover:text-blue-300 underline">Privacy Policy</Link>, which outlines how we collect, use,
                         and protect your information. Please review it for more details.
@@ -66,15 +77,17 @@ export default function TermsOfService() {
                 </section>
 
                 <section>
-                    <h2 className="text-2xl font-semibold mb-4 text-purple-400">6. Disclaimers</h2>
-                    <ul className="list-disc pl-5 space-y-1">
-                        <li>VoterVantage provides its services "as is" and makes no warranties, express or implied, regarding the accuracy, reliability, or availability of our platform.</li>
+                    <h2 className="text-2xl font-semibold mb-4 text-purple-400">7. Disclaimers & Data Accuracy</h2>
+                    <ul className="list-disc pl-5 space-y-2">
+                        <li><strong>"As Is" Basis:</strong> VoterVantage provides its services and data "as is" and makes no warranties, express or implied, regarding the accuracy, reliability, completeness, or timeliness of our platform or data.</li>
+                        <li><strong>Public Records:</strong> Our data is sourced from public government records. While we strive for accuracy, errors in the original data or in the processing of that data may occur.</li>
+                        <li><strong>Not Official Records:</strong> The information on this site is NOT the official government record. For official purposes, please consult the relevant city clerk or government agency directly.</li>
                         <li>We do not guarantee that our services will be uninterrupted or error-free.</li>
                     </ul>
                 </section>
 
                 <section>
-                    <h2 className="text-2xl font-semibold mb-4 text-purple-400">7. Limitation of Liability</h2>
+                    <h2 className="text-2xl font-semibold mb-4 text-purple-400">8. Limitation of Liability</h2>
                     <p>
                         To the maximum extent permitted by law, VoterVantage shall not be liable for any indirect,
                         incidental, or consequential damages arising from your use of our platform.
@@ -82,7 +95,7 @@ export default function TermsOfService() {
                 </section>
 
                 <section>
-                    <h2 className="text-2xl font-semibold mb-4 text-purple-400">8. Modifications to Terms</h2>
+                    <h2 className="text-2xl font-semibold mb-4 text-purple-400">9. Modifications to Terms</h2>
                     <p>
                         We may update these Terms from time to time. Any changes will be effective upon posting to our
                         website, and the "Effective Date" at the top will reflect the latest revision. Continued use of our
@@ -91,7 +104,7 @@ export default function TermsOfService() {
                 </section>
 
                 <section>
-                    <h2 className="text-2xl font-semibold mb-4 text-purple-400">9. Termination</h2>
+                    <h2 className="text-2xl font-semibold mb-4 text-purple-400">10. Termination</h2>
                     <p>
                         VoterVantage reserves the right to suspend or terminate your access to our platform if you violate
                         these Terms or engage in unlawful activities.
@@ -99,7 +112,7 @@ export default function TermsOfService() {
                 </section>
 
                 <section>
-                    <h2 className="text-2xl font-semibold mb-4 text-purple-400">10. Governing Law</h2>
+                    <h2 className="text-2xl font-semibold mb-4 text-purple-400">11. Governing Law</h2>
                     <p>
                         These Terms are governed by the laws of the State of California, without regard to its conflict of laws
                         principles.
@@ -107,7 +120,7 @@ export default function TermsOfService() {
                 </section>
 
                 <section>
-                    <h2 className="text-2xl font-semibold mb-4 text-purple-400">11. Contact Us</h2>
+                    <h2 className="text-2xl font-semibold mb-4 text-purple-400">12. Contact Us</h2>
                     <p className="mb-2">If you have any questions or concerns about these Terms, please contact us at:</p>
                     <div className="bg-white/5 p-4 rounded-lg inline-block">
                         <p className="font-semibold text-white">VoterVantage</p>

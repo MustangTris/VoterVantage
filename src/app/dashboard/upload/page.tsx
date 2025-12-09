@@ -3,11 +3,15 @@
 
 import { useState, useMemo } from "react"
 import * as XLSX from "xlsx"
+import Papa from "papaparse"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Upload, FileSpreadsheet, File, AlertCircle, Check, Loader2, ArrowRight, ArrowLeft, Database, AlertTriangle } from "lucide-react"
+import { Upload, File, AlertCircle, Check, Loader2, ArrowRight, ArrowLeft, Database, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { DebugConsole } from "@/components/debug-console"
+import { createClient } from "@/lib/supabase/client"
+import { TransactionSchema, cleanRow } from "@/lib/validators/transaction"
 
 // --- Configuration ---
 type FieldDefinition = {
@@ -19,8 +23,8 @@ type FieldDefinition = {
 }
 
 const REQUIRED_FIELDS: FieldDefinition[] = [
-    { key: "Filer_NamL", label: "Filer Name", description: "Campaign/Committee Name", required: true, aliases: ["filer", "committee", "candidate"] },
-    { key: "Filer_ID", label: "Filer ID", description: "State/City ID", required: true, aliases: ["id", "filer_id"] },
+    { key: "Filer_NamL", label: "Filer Name", description: "Campaign/Committee Name", required: false, aliases: ["filer", "committee", "candidate"] },
+    { key: "Filer_ID", label: "Filer ID", description: "State/City ID", required: false, aliases: ["id", "filer_id"] },
     { key: "Entity_Name", label: "Contributor/Payee", description: "Who gave/received money", required: true, aliases: ["tran_nam", "payee", "contributor", "name", "entity"] },
     { key: "Amount", label: "Amount", description: "Transaction value", required: true, aliases: ["amount", "amt", "payment", "received"] },
     { key: "Tran_Date", label: "Date", description: "Transaction Date", required: false, aliases: ["date", "time", "day", "rpt_date"] },
@@ -84,6 +88,7 @@ export default function UploadPage() {
     const [file, setFile] = useState<File | null>(null)
     const [isProcessing, setIsProcessing] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [chunkProgress, setChunkProgress] = useState<string | null>(null)
 
     // Multi-Sheet State
     const [processedSheets, setProcessedSheets] = useState<ProcessedSheet[]>([])
@@ -110,48 +115,76 @@ export default function UploadPage() {
 
         setIsProcessing(true)
         try {
-            const buf = await selectedFile.arrayBuffer()
-            const wb = XLSX.read(buf)
+            if (selectedFile.name.endsWith(".csv")) {
+                // PAPAPARSE for CSV
+                Papa.parse(selectedFile, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: (results) => {
+                        const headers = results.meta.fields || []
+                        const rows = results.data
+                        if (rows.length > 0) {
+                            const mapping = generateAutoMapping(headers)
+                            setProcessedSheets([{
+                                id: "csv-main",
+                                name: selectedFile.name,
+                                type: detectSheetType(selectedFile.name),
+                                headers,
+                                rows,
+                                mapping
+                            }])
+                            setStep("MAP")
+                        } else {
+                            setError("CSV file is empty.")
+                            setFile(null)
+                        }
+                        setIsProcessing(false)
+                    },
+                    error: (err) => {
+                        setError(`CSV Parse Error: ${err.message}`)
+                        setIsProcessing(false)
+                    }
+                })
+            } else {
+                // XLSX for Excel
+                const buf = await selectedFile.arrayBuffer()
+                const wb = XLSX.read(buf)
 
-            if (wb.SheetNames.length === 0) throw new Error("Empty file")
+                if (wb.SheetNames.length === 0) throw new Error("Empty file")
 
-            const newSheets: ProcessedSheet[] = []
+                const newSheets: ProcessedSheet[] = []
 
-            wb.SheetNames.forEach(sheetName => {
-                // 1. Detect Type
-                const type = detectSheetType(sheetName)
+                wb.SheetNames.forEach(sheetName => {
+                    const type = detectSheetType(sheetName)
+                    const ws = wb.Sheets[sheetName]
+                    const json = XLSX.utils.sheet_to_json(ws, { defval: "" }) as any[]
 
-                // If unknown, we usually might skip, but let's include it for manual review if it's the ONLY sheet or user wants to map it.
-                // For "Smart" wizard, let's include all non-empty sheets but separate them.
+                    if (json.length > 0) {
+                        const headers = Object.keys(json[0] as object)
+                        const mapping = generateAutoMapping(headers)
 
-                const ws = wb.Sheets[sheetName]
-                const json = XLSX.utils.sheet_to_json(ws, { defval: "" }) as any[]
+                        newSheets.push({
+                            id: sheetName,
+                            name: sheetName,
+                            type,
+                            headers,
+                            rows: json,
+                            mapping
+                        })
+                    }
+                })
 
-                if (json.length > 0) {
-                    const headers = Object.keys(json[0] as object)
-                    const mapping = generateAutoMapping(headers)
+                if (newSheets.length === 0) throw new Error("No data found in file")
 
-                    newSheets.push({
-                        id: sheetName,
-                        name: sheetName,
-                        type,
-                        headers,
-                        rows: json,
-                        mapping
-                    })
-                }
-            })
-
-            if (newSheets.length === 0) throw new Error("No data found in file")
-
-            setProcessedSheets(newSheets)
-            setStep("MAP")
+                setProcessedSheets(newSheets)
+                setStep("MAP")
+                setIsProcessing(false)
+            }
 
         } catch (err: any) {
             console.error(err)
             setError(err.message || "Failed to parse spreadsheet.")
             setFile(null)
-        } finally {
             setIsProcessing(false)
         }
     }
@@ -190,13 +223,11 @@ export default function UploadPage() {
         processedSheets.forEach(sheet => {
             const { mapping, rows, type } = sheet
 
-            // Skip unknown sheets if they aren't mapped properly or we can define a rule
-            // For now, process all.
-
             rows.forEach((row, idx) => {
                 const mappedRow: any = {}
                 const missingFields: string[] = []
 
+                // 1. Map Data
                 REQUIRED_FIELDS.forEach(field => {
                     const sourceHeader = mapping[field.key]
                     const value = sourceHeader ? row[sourceHeader] : undefined
@@ -204,25 +235,27 @@ export default function UploadPage() {
                     if (field.required && (value === undefined || value === null || value === "")) {
                         missingFields.push(field.label)
                     }
-
-                    // Value Cleaning
-                    if (field.key === "Amount" && value) {
-                        const clean = String(value).replace(/[^0-9.-]+/g, "")
-                        mappedRow[field.key] = parseFloat(clean)
-                    } else {
-                        mappedRow[field.key] = value
-                    }
+                    mappedRow[field.key] = value
                 })
 
-                // Inject Rec_Type if known
-                if (type !== 'UNKNOWN') {
+                // Inject Rec_Type if known (and not overridden)
+                if (type !== 'UNKNOWN' && !mappedRow['Rec_Type']) {
                     mappedRow['Rec_Type'] = type
                 }
 
-                if (missingFields.length > 0) {
+                // 2. Pre-clean
+                const cleanedForZod = cleanRow(mappedRow)
+
+                // 3. Zod Validation
+                const zodResult = TransactionSchema.safeParse(cleanedForZod)
+
+                if (!zodResult.success) {
+                    const issues = (zodResult.error as any).errors.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ')
+                    invalid.push({ sheet: sheet.name, row: idx + 2, reason: issues, data: row })
+                } else if (missingFields.length > 0) {
                     invalid.push({ sheet: sheet.name, row: idx + 2, reason: `Missing: ${missingFields.join(", ")}`, data: row })
                 } else {
-                    valid.push(mappedRow)
+                    valid.push(zodResult.data)
                 }
             })
         })
@@ -234,39 +267,104 @@ export default function UploadPage() {
     const handleSubmit = async () => {
         if (!file) return
         setIsProcessing(true)
+        setChunkProgress("Starting upload...")
+        setError(null)
+        const supabase = createClient()
+
+        let storagePath: string | null = null
 
         try {
-            // Upload File
-            const { createClient } = await import("@/lib/supabase/client")
-            const supabase = createClient()
+            // 1. Archival: Upload Raw File
             const fileExt = file.name.split('.').pop()
-            const path = `uploads/${Date.now()}_${Math.random().toString(36).slice(7)}.${fileExt}`
+            const fileName = `raw_uploads/${Date.now()}_${file.name.replace(/[^a-z0-9.]/gi, '_')}`
 
-            const { error: uploadErr } = await supabase.storage.from('filings').upload(path, file)
-            if (uploadErr) throw new Error("Storage upload failed")
+            const { data: uploadData, error: uploadErr } = await supabase.storage
+                .from('filings') // Using 'filings' bucket as per existing setup
+                .upload(fileName, file)
 
-            const { data: { publicUrl } } = supabase.storage.from('filings').getPublicUrl(path)
+            if (uploadErr) throw new Error(`Storage upload failed: ${uploadErr.message}`)
 
-            // For Excel: Use validated data. For PDF: submit empty (actions handles file only)
+            storagePath = fileName
+            setChunkProgress("File archived. Starting import...")
+
+            // 2. Database Insert (Chunked)
             const payload = file.name.endsWith(".pdf") ? [] : validatedData.valid
 
-            // Submit
-            const { submitUpload } = await import("./actions")
-            const res = await submitUpload(payload, publicUrl)
+            if (payload.length > 0) {
+                const BATCH_SIZE = 1000
+                const totalBatches = Math.ceil(payload.length / BATCH_SIZE)
 
-            if (res.success) {
-                alert(`Success! Imported ${res.count} records.`)
-                setStep("UPLOAD")
-                setFile(null)
-                setProcessedSheets([])
-            } else {
-                setError(res.message || "Submission failed")
+                // Create a placeholder filing record first? 
+                // The old 'actions' did this. We should probably recreate a minimal filing record to link transactions to.
+                // For now, let's just insert transactions assuming they might be linked later or just raw. 
+                // Actually, transactions usually need a 'filing_id'. 
+                // Let's create a 'filings' record first via client if RLS allows.
+
+                const { data: filingData, error: filingError } = await supabase
+                    .from('filings')
+                    .insert({
+                        filer_name: payload[0].Filer_NamL || 'Unknown Filer',
+                        status: 'PROCESSING',
+                        source_file_url: storagePath
+                    })
+                    .select()
+                    .single()
+
+                if (filingError) throw new Error(`Failed to create filing: ${filingError.message}`)
+                const filingId = filingData.id
+
+                for (let i = 0; i < payload.length; i += BATCH_SIZE) {
+                    setChunkProgress(`Importing batch ${Math.floor(i / BATCH_SIZE) + 1} of ${totalBatches}...`)
+                    const batch = payload.slice(i, i + BATCH_SIZE).map(row => ({
+                        // Map Zod keys to DB keys if they differ. 
+                        // Our Zod schema uses 'Tran_NamL' etc which might match DB or legacy.
+                        // The DB schema in 'actions.ts' had lowercase snake_case columns.
+                        // We need to map Zod (PascalCase-ish) to DB (snake_case).
+
+                        filing_id: filingId,
+                        transaction_type: row.Rec_Type || 'UNKNOWN',
+                        entity_name: row.Entity_Name,
+                        amount: row.Amount,
+                        transaction_date: row.Tran_Date,
+
+                        entity_city: row.Tran_City,
+                        entity_state: row.Tran_State,
+                        entity_zip: row.Tran_Zip4,
+                        contributor_employer: row.Tran_Emp,
+                        contributor_occupation: row.Tran_Occ,
+
+                        // Add other fields as necessary from schema...
+                        description: "Imported via Client Upload"
+                    }))
+
+                    const { error: insertError } = await supabase
+                        .from('transactions')
+                        .insert(batch)
+
+                    if (insertError) {
+                        // Compensation: Delete file? Or just stop?
+                        throw new Error(`Batch insert failed: ${insertError.message}`)
+                    }
+                }
             }
 
+            alert(`Success! processed file & imported ${payload.length} records.`)
+            setStep("UPLOAD")
+            setFile(null)
+            setProcessedSheets([])
+
         } catch (err: any) {
+            console.error(err)
             setError(err.message)
+
+            // Compensation: Clean up storage if DB failed?
+            if (storagePath) {
+                console.log("Compensating: Deleting orphaned file...")
+                await supabase.storage.from('filings').remove([storagePath])
+            }
         } finally {
             setIsProcessing(false)
+            setChunkProgress(null)
         }
     }
 
@@ -369,10 +467,10 @@ export default function UploadPage() {
                             value={activeSheet.type}
                             onValueChange={(val: any) => updateSheetType(val)}
                         >
-                            <SelectTrigger className="w-[180px] bg-white h-8 text-xs">
+                            <SelectTrigger className="w-[180px] bg-white h-8 text-xs text-slate-900 border-slate-300">
                                 <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="bg-white text-slate-900 border-slate-200">
                                 <SelectItem value="CONTRIBUTION">Contribution (Receipts)</SelectItem>
                                 <SelectItem value="EXPENDITURE">Expenditure (Payments)</SelectItem>
                                 <SelectItem value="UNKNOWN">Other / Unknown</SelectItem>
@@ -400,13 +498,13 @@ export default function UploadPage() {
                                     value={activeSheet.mapping[field.key] || "ignore"}
                                     onValueChange={(val) => updateMapping(field.key, val === "ignore" ? "" : val)}
                                 >
-                                    <SelectTrigger>
+                                    <SelectTrigger className="text-slate-900 border-slate-300">
                                         <SelectValue placeholder="Select column..." />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent className="bg-white text-slate-900 border-slate-200">
                                         <SelectItem value="ignore" className="text-slate-400 font-medium">-- Unmapped --</SelectItem>
                                         {activeSheet.headers.map(h => (
-                                            <SelectItem key={h} value={h}>{h}</SelectItem>
+                                            <SelectItem key={h} value={h} className="text-slate-900">{h}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -419,9 +517,7 @@ export default function UploadPage() {
                     <Button variant="outline" onClick={() => { setFile(null); setStep("UPLOAD"); }}>Cancel</Button>
                     <Button onClick={() => setStep("PREVIEW")} disabled={
                         processedSheets.some(s =>
-                            s.type !== 'UNKNOWN' && // Only validate known types strongly? Or force all? Let's check current active sheet at least?
-                            // Logic: Disable if ANY required field is missing in ANY sheet?? 
-                            // Better: Disable if CURRENT sheet is missing required.
+                            s.type !== 'UNKNOWN' &&
                             REQUIRED_FIELDS.some(f => f.required && !s.mapping[f.key])
                         )
                     }>
@@ -464,17 +560,32 @@ export default function UploadPage() {
                         <div>
                             <div className={cn("text-2xl font-bold", validatedData.invalid.length > 0 ? "text-red-900" : "text-slate-700")}>{validatedData.invalid.length}</div>
                             <div className={cn("text-sm font-medium", validatedData.invalid.length > 0 ? "text-red-700" : "text-slate-500")}>Invalid Records</div>
-                            <div className={cn("text-xs mt-1", validatedData.invalid.length > 0 ? "text-red-600" : "text-slate-400")}>Will be skipped</div>
+                            <div className={cn("text-xs mt-1", validatedData.invalid.length > 0 ? "text-red-600" : "text-slate-400")}>
+                                {validatedData.invalid.length > 0 ? "Strict validation failed" : "Will be skipped"}
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
             </div>
 
+            {/* Invalid Reasons List */}
+            {validatedData.invalid.length > 0 && (
+                <div className="border border-red-100 bg-red-50 rounded-lg p-4 max-h-40 overflow-auto">
+                    <h4 className="font-semibold text-red-800 text-sm mb-2">Errors Found:</h4>
+                    <ul className="text-xs text-red-700 space-y-1">
+                        {validatedData.invalid.slice(0, 10).map((inv, i) => (
+                            <li key={i}>Row {inv.row} ({inv.sheet}): {inv.reason}</li>
+                        ))}
+                        {validatedData.invalid.length > 10 && <li>...and {validatedData.invalid.length - 10} more.</li>}
+                    </ul>
+                </div>
+            )}
+
             {/* Valid Data Preview */}
             <div className="space-y-2">
                 <h3 className="font-semibold text-slate-900">Preview (First 5 Valid)</h3>
                 <div className="border rounded-lg overflow-auto max-h-60 bg-white">
-                    <table className="w-full text-sm text-center">
+                    <table className="w-full text-sm text-center text-slate-900">
                         <thead className="bg-slate-50 sticky top-0">
                             <tr>
                                 {REQUIRED_FIELDS.map(f => <th key={f.key} className="px-3 py-2 border-b font-medium">{f.label}</th>)}
@@ -493,14 +604,14 @@ export default function UploadPage() {
             </div>
 
             <div className="flex justify-end gap-3 pt-6 border-t">
-                <Button variant="outline" onClick={() => setStep("MAP")}>Back</Button>
+                <Button variant="outline" onClick={() => { setFile(null); setStep("MAP") }}>Back</Button>
                 <Button
                     onClick={handleSubmit}
                     disabled={validatedData.valid.length === 0 || isProcessing}
                     className="bg-green-600 hover:bg-green-700"
                 >
                     {isProcessing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Database className="h-4 w-4 mr-2" />}
-                    Import {validatedData.valid.length} Records
+                    {isProcessing ? (chunkProgress || "Processing...") : `Import ${validatedData.valid.length} Records`}
                 </Button>
             </div>
 
@@ -517,6 +628,8 @@ export default function UploadPage() {
             {step === "UPLOAD" && renderUpload()}
             {step === "MAP" && renderMap()}
             {step === "PREVIEW" && renderPreview()}
+
+            <DebugConsole />
         </div>
     )
 }
