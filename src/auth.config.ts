@@ -13,8 +13,14 @@ export default {
         signIn: "/login",
     },
     callbacks: {
-        async session({ session, user }) {
-            // Add user role to session if needed
+        async session({ session, token }) {
+            // Add user ID to session from JWT token
+            if (token?.sub) {
+                session.user.id = token.sub
+            }
+            if (token?.email) {
+                session.user.email = token.email
+            }
             return session
         }
     }

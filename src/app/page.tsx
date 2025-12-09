@@ -21,31 +21,25 @@ export default async function Home() {
       <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 px-4">
         <div className="container mx-auto flex flex-col items-center text-center relative z-10">
 
-          {/* Enhanced Glass Card with Logo Overlay */}
-          <div className="relative mb-12 group">
-            {/* Background Glass Card */}
-            <div className="glass-panel relative rounded-3xl px-12 py-8 md:px-16 md:py-12 border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-transparent backdrop-blur-xl shadow-2xl hover:shadow-purple-500/20 transition-all duration-500">
+          {/* Logo and Text */}
+          <div className="mb-12 flex flex-col items-center">
+            {/* Large Logo */}
+            <div className="mb-6 group">
+              <img
+                src="/logo.png"
+                alt="VoterVantage Logo"
+                className="w-48 h-48 md:w-64 md:h-64 object-contain group-hover:drop-shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all duration-500"
+              />
+            </div>
 
-              {/* Large Transparent Logo Overlay */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
-                <div className="relative">
-                  <img
-                    src="/logo.png"
-                    alt="VoterVantage Logo"
-                    className="w-48 h-48 md:w-64 md:h-64 object-contain opacity-40 group-hover:opacity-50 transition-opacity duration-500 drop-shadow-[0_0_30px_rgba(168,85,247,0.3)]"
-                  />
-                </div>
-              </div>
-
-              {/* Content */}
-              <div className="relative z-10">
-                <h2 className="text-2xl md:text-3xl font-bold text-white mb-3 tracking-wide">
-                  VoterVantage
-                </h2>
-                <p className="text-base md:text-lg text-purple-200 font-medium tracking-wide max-w-md mx-auto">
-                  Informed and Free, Together We Shape Democracy
-                </p>
-              </div>
+            {/* Text beneath Logo */}
+            <div className="glass-panel rounded-3xl px-12 py-8 md:px-16 md:py-10 border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-transparent backdrop-blur-xl shadow-2xl hover:shadow-purple-500/20 transition-all duration-500">
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-3 tracking-wide">
+                VoterVantage
+              </h2>
+              <p className="text-base md:text-lg text-purple-200 font-medium tracking-wide max-w-md mx-auto">
+                Informed and Free, Together We Shape Democracy
+              </p>
             </div>
           </div>
 
