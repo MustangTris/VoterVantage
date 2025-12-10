@@ -159,7 +159,7 @@ export default function SearchPage() {
                         <span className="font-medium">Browse by Category</span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <Link href="/cities/palm-springs">
+                        <Link href="/cities">
                             <div className="glass-panel p-4 rounded-xl hover:bg-white/10 transition-all cursor-pointer flex items-center justify-between group border border-white/5 hover:border-purple-500/30">
                                 <span className="text-white font-medium">Cities</span>
                                 <ArrowRight className="h-4 w-4 text-slate-500 group-hover:text-purple-400 transition-colors" />

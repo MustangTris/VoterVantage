@@ -705,7 +705,7 @@ export default function UploadPage() {
                 <h3 className="font-semibold text-white">Preview (First 5 Valid)</h3>
                 <div className="border border-white/10 rounded-lg overflow-auto max-h-60 bg-white/5">
                     <table className="w-full text-sm text-center text-slate-300">
-                        <thead className="bg-white/10 sticky top-0 text-white">
+                        <thead className="sticky top-0 z-10 bg-slate-900/90 backdrop-blur-sm text-white shadow-sm">
                             <tr>
                                 {REQUIRED_FIELDS.map(f => <th key={f.key} className="px-3 py-2 border-b border-white/10 font-medium">{f.label}</th>)}
                             </tr>

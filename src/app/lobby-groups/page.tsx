@@ -1,8 +1,13 @@
-import { Button } from "@/components/ui/button"
+import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Building2, DollarSign, Target, TrendingUp } from "lucide-react"
+import { Users, DollarSign, Briefcase, TrendingUp, ArrowRight } from "lucide-react"
+import { getLobbyistOverviewStats } from "@/app/actions/category-stats"
 
-export default function LobbyGroupDashboard() {
+export const dynamic = 'force-dynamic'
+
+export default async function LobbyGroupsOverview() {
+    const stats = await getLobbyistOverviewStats()
+
     return (
         <div className="min-h-screen text-white overflow-hidden relative">
             {/* Background Ambience */}
@@ -11,140 +16,107 @@ export default function LobbyGroupDashboard() {
 
             <div className="container mx-auto px-4 py-8 relative z-10 pt-32">
                 {/* Header */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                    <div>
-                        <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-teal-400">
-                            Clean Energy Coalition
-                        </h1>
-                        <p className="text-slate-400 mt-1">Status: Active • Type: 501(c)(4) • Est. 2012</p>
+                <div className="mb-12 text-center">
+                    <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-teal-400">
+                        Lobbyists Dashboard
+                    </h1>
+                    <p className="text-xl text-slate-400 max-w-2xl mx-auto">
+                        Analyze spending and influence of lobby groups and registered lobbyists.
+                    </p>
+                </div>
+
+                {/* Aggregate Stats */}
+                <div className="grid gap-6 md:grid-cols-3 mb-12">
+                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium text-slate-300">Total Lobbyists</CardTitle>
+                            <Users className="h-4 w-4 text-green-400" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-3xl font-bold text-white">{stats.totalLobbyists}</div>
+                            <p className="text-xs text-slate-400">Registered entities</p>
+                        </CardContent>
+                    </Card>
+                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium text-slate-300">Total Influence Spending</CardTitle>
+                            <DollarSign className="h-4 w-4 text-emerald-400" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-3xl font-bold text-white">
+                                ${(stats.totalSpent).toLocaleString()}
+                            </div>
+                            <p className="text-xs text-slate-400">Recorded expenditures/contributions</p>
+                        </CardContent>
+                    </Card>
+                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium text-slate-300">Avg. Spend per Group</CardTitle>
+                            <Briefcase className="h-4 w-4 text-teal-400" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-3xl font-bold text-white">
+                                ${stats.totalLobbyists > 0 ? Math.round(stats.totalSpent / stats.totalLobbyists).toLocaleString() : 0}
+                            </div>
+                            <p className="text-xs text-slate-400">Per registered entity</p>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Top Spenders */}
+                <div className="mb-12">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                            <TrendingUp className="h-6 w-6 text-green-400" />
+                            Top Spenders
+                        </h2>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {stats.topSpenders.length > 0 ? (
+                            stats.topSpenders.map((lobbyist) => (
+                                <Link href={`/lobby-groups/${lobbyist.id}`} key={lobbyist.id} className="block group">
+                                    <div className="glass-panel p-6 rounded-xl border border-white/5 hover:border-green-500/30 hover:bg-white/10 transition-all duration-300">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="h-12 w-12 rounded-full bg-white/10 overflow-hidden flex items-center justify-center">
+                                                <Briefcase className="h-6 w-6 text-slate-400" />
+                                            </div>
+                                            <ArrowRight className="h-5 w-5 text-slate-500 group-hover:text-green-400 transition-colors" />
+                                        </div>
+                                        <h3 className="text-lg font-bold text-white mb-1 group-hover:text-green-400 transition-colors">
+                                            {lobbyist.name}
+                                        </h3>
+                                        <div className="text-sm text-slate-400 mb-2">Total Spent</div>
+                                        <div className="text-xl font-bold text-emerald-400">
+                                            ${lobbyist.total_spent.toLocaleString()}
+                                        </div>
+                                    </div>
+                                </Link>
+                            ))
+                        ) : (
+                            <div className="col-span-full text-center text-slate-500 py-8 glass-panel rounded-xl">
+                                No spending data available yet.
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* Key Metrics */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-slate-300">Total Spent</CardTitle>
-                            <DollarSign className="h-4 w-4 text-green-400" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-white">$4,500,000</div>
-                            <p className="text-xs text-slate-400">Since 2020</p>
-                        </CardContent>
-                    </Card>
-                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-slate-300">Lobbyists</CardTitle>
-                            <UsersIcon className="h-4 w-4 text-blue-400" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-white">12</div>
-                            <p className="text-xs text-slate-400">Full-time registered</p>
-                        </CardContent>
-                    </Card>
-                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-slate-300">Targeted Measures</CardTitle>
-                            <Target className="h-4 w-4 text-red-400" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-white">5</div>
-                            <p className="text-xs text-slate-400">In current cycle</p>
-                        </CardContent>
-                    </Card>
-                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-slate-300">Win Rate</CardTitle>
-                            <TrendingUp className="h-4 w-4 text-purple-400" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-white">65%</div>
-                            <p className="text-xs text-slate-400">Supported outcomes achieved</p>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* Dashboard Content */}
-                <div className="grid gap-8 md:grid-cols-2">
-                    {/* Top Beneficiaries */}
-                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm h-full">
-                        <CardHeader>
-                            <CardTitle className="text-white">Top Beneficiaries</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                {[
-                                    { name: "Support for Mayor Johnson", amount: "$50,000", type: "Contribution" },
-                                    { name: "Committee for Prop 12", amount: "$150,000", type: "Independent Expenditure" },
-                                    { name: "Sarah Smith for Council", amount: "$12,000", type: "Contribution" },
-                                    { name: "Voters for Green Parks", amount: "$8,500", type: "Contribution" },
-                                ].map((item, i) => (
-                                    <div key={i} className="flex items-center justify-between border-b border-white/5 pb-2 last:border-0">
-                                        <div>
-                                            <p className="font-medium text-white">{item.name}</p>
-                                            <p className="text-xs text-slate-500">{item.type}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="font-bold text-green-400">{item.amount}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Stance on Issues */}
-                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm h-full">
-                        <CardHeader>
-                            <CardTitle className="text-white">Issue Advocacy</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                {[
-                                    { issue: "Solar Subsidies", stance: "Support", intensity: "High" },
-                                    { issue: "Downtown Parking Tax", stance: "Oppose", intensity: "Medium" },
-                                    { issue: "Wind Farm Expansion", stance: "Support", intensity: "High" },
-                                    { issue: "Water Conservation Mandate", stance: "Neutral", intensity: "Low" },
-                                ].map((issue, i) => (
-                                    <div key={i} className="flex items-center justify-between border-b border-white/5 pb-2 last:border-0">
-                                        <div>
-                                            <p className="font-medium text-white">{issue.issue}</p>
-                                        </div>
-                                        <span className={`px-2 py-1 rounded text-xs font-bold ${issue.stance === 'Support' ? 'bg-green-500/20 text-green-400' :
-                                            issue.stance === 'Oppose' ? 'bg-red-500/20 text-red-400' :
-                                                'bg-yellow-500/20 text-yellow-400'
-                                            }`}>
-                                            {issue.stance}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
+                {/* Info Section */}
+                <div className="glass-panel p-8 rounded-2xl border border-white/5 flex flex-col md:flex-row items-center justify-between gap-8">
+                    <div>
+                        <h3 className="text-xl font-bold text-white mb-2">Understanding Lobbying Data</h3>
+                        <p className="text-slate-400 max-w-xl">
+                            Our data tracks both direct contributions to candidates and independent expenditures on ballot measures.
+                            Comparison data includes all processed Form 460 filings.
+                        </p>
+                    </div>
+                    <Link href="/search">
+                        <span className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-medium text-white hover:bg-white/10 transition-colors">
+                            Search Specific Groups
+                        </span>
+                    </Link>
                 </div>
             </div>
         </div>
-    )
-}
-
-function UsersIcon(props: React.SVGProps<SVGSVGElement>) {
-    return (
-        <svg
-            {...props}
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-        >
-            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-            <circle cx="9" cy="7" r="4" />
-            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-        </svg>
     )
 }

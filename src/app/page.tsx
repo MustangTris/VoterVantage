@@ -28,7 +28,7 @@ export default async function Home() {
               <img
                 src="/logo.png"
                 alt="VoterVantage Logo"
-                className="w-64 h-64 md:w-[500px] md:h-[500px] object-contain group-hover:drop-shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all duration-500"
+                className="w-48 h-48 md:w-64 md:h-64 object-contain group-hover:drop-shadow-[0_0_30px_rgba(168,85,247,0.5)] transition-all duration-500"
               />
             </div>
 
