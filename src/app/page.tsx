@@ -44,9 +44,9 @@ export default async function Home() {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 leading-tight">
-            Follow the <TextCarousel words={["Money", "Politicians", "Cities", "Lobbyists"]} className="text-purple-400 mx-2" /> in <br className="hidden md:inline" />
-            <span className="text-gradient drop-shadow-sm">
-              City Politics
+            Follow the <TextCarousel words={["Money", "Politicians", "Cities", "Lobbyists"]} className="text-purple-400 mx-2" /> <br className="hidden md:inline" />
+            in <span className="text-gradient drop-shadow-sm">
+              Local Politics
             </span>
           </h1>
 

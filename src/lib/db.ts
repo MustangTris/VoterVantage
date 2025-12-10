@@ -1,4 +1,6 @@
-import { Pool } from 'pg';
+import { Pool, PoolConfig } from 'pg';
+import fs from 'fs';
+import path from 'path';
 
 const originalConnectionString = process.env.DATABASE_URL || '';
 
@@ -13,6 +15,22 @@ if (originalConnectionString.includes('pooler.supabase.com') && connectionString
     connectionString = connectionString.replace(':5432', ':6543');
 }
 
+// Prepare SSL Configuration
+let sslConfig: PoolConfig['ssl'] = { rejectUnauthorized: false };
+
+try {
+    const certPath = path.join(process.cwd(), 'src', 'certs', 'prod-ca-2021.crt');
+    if (fs.existsSync(certPath)) {
+        sslConfig = {
+            rejectUnauthorized: true,
+            ca: fs.readFileSync(certPath).toString(),
+        };
+        console.log('Using SSL Certificate for Database Connection');
+    }
+} catch (err) {
+    console.warn('Could not load SSL Certificate, falling back to insecure connection:', err);
+}
+
 // Use a global variable to store the pool instance in development
 // to avoid creating multiple connections during hot reloading.
 let pool: Pool;
@@ -20,7 +38,7 @@ let pool: Pool;
 if (process.env.NODE_ENV === 'production') {
     pool = new Pool({
         connectionString,
-        ssl: { rejectUnauthorized: false },
+        ssl: sslConfig,
         max: 1, // Limit pool size to prevent hitting connection limits, especially during build with multiple workers
     });
 } else {
@@ -29,7 +47,7 @@ if (process.env.NODE_ENV === 'production') {
         // @ts-ignore
         global.postgresPool = new Pool({
             connectionString,
-            ssl: { rejectUnauthorized: false },
+            ssl: sslConfig,
             max: 1, // Limit pool size
         });
     }

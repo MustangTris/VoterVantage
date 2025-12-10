@@ -64,7 +64,7 @@ export function DonationForm() {
                 alert("Failed to initialize checkout. Please try again.")
             }
         } catch (error) {
-            console.error("Error:", error)
+            console.error("Error fetching client secret:", error)
             alert("An error occurred. Please try again.")
         } finally {
             setIsLoading(false)
@@ -74,6 +74,7 @@ export function DonationForm() {
     if (clientSecret) {
         return (
             <div className="w-full" id="checkout">
+                {!clientSecret && <p className="text-center">Loading Secure Checkout...</p>}
                 <EmbeddedCheckoutProvider
                     stripe={stripePromise}
                     options={{ clientSecret }}

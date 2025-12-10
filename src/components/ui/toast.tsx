@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import { X, CheckCircle2, AlertCircle, Info } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { ToastProps as HookToastProps } from "@/hooks/use-toast"
 
@@ -22,14 +21,9 @@ export function Toast({
     onOpenChange?: (open: boolean) => void
 }) {
     return (
-        <motion.div
-            layout
-            initial={{ opacity: 0, y: 50, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
-            transition={{ type: "spring", damping: 20, stiffness: 300 }}
+        <div
             className={cn(
-                "pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-4 shadow-lg transition-all",
+                "pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-4 shadow-lg transition-all animate-in slide-in-from-right-full fade-in duration-300",
                 // Glassmorphism base
                 "bg-[#0a0a0a]/90 backdrop-blur-xl border-white/10",
                 variant === "default" && "border-l-4 border-l-purple-500", // Default / Info
@@ -77,6 +71,6 @@ export function Toast({
             >
                 <X className="h-4 w-4" />
             </button>
-        </motion.div>
+        </div>
     )
 }

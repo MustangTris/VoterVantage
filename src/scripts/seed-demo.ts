@@ -1,5 +1,4 @@
-
-import { Pool } from 'pg';
+import { Pool, PoolConfig } from 'pg';
 import fs from 'fs';
 import path from 'path';
 
@@ -20,9 +19,25 @@ try {
     console.warn("Could not read .env.local", e);
 }
 
+// Prepare SSL Configuration
+let sslConfig: PoolConfig['ssl'] = process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false;
+
+try {
+    const certPath = path.join(process.cwd(), 'src', 'certs', 'prod-ca-2021.crt');
+    if (fs.existsSync(certPath)) {
+        sslConfig = {
+            rejectUnauthorized: true,
+            ca: fs.readFileSync(certPath).toString(),
+        };
+        console.log('Using SSL Certificate for Seeding');
+    }
+} catch (err) {
+    console.warn('Could not load SSL Certificate for seeding, falling back:', err);
+}
+
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    ssl: sslConfig,
 });
 
 async function main() {

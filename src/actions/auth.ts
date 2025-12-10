@@ -75,6 +75,7 @@ export async function authenticate(
             redirectTo: "/dashboard",
         })
     } catch (error) {
+        console.error("Authentication Error:", error); // Log full error to server console
         if (error instanceof AuthError) {
             switch (error.type) {
                 case "CredentialsSignin":
@@ -83,6 +84,7 @@ export async function authenticate(
                     return "Something went wrong."
             }
         }
-        throw error
+        // For debugging: return the actual error message if not an AuthError
+        return `System Error: ${(error as Error).message}`;
     }
 }

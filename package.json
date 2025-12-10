@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:https": "concurrently \"next dev\" \"local-ssl-proxy --source 3001 --target 3000\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -24,7 +25,6 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
-    "framer-motion": "^12.23.25",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.556.0",
     "next": "16.0.7",
@@ -48,8 +48,10 @@
     "@types/pg": "^8.15.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^9.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.0.7",
+    "local-ssl-proxy": "^2.0.5",
     "tailwindcss": "^4",
     "typescript": "^5"
   },

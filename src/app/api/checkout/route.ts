@@ -66,7 +66,7 @@ export async function POST(req: Request) {
             }
         );
     } catch (error) {
-        console.error("[STRIPE_CHECKOUT]", error);
+        console.error("[STRIPE_CHECKOUT_ERROR]", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
