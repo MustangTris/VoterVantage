@@ -23,7 +23,7 @@ export function TextCarousel({ words, interval = 3000, className }: TextCarousel
         <div className={`inline-flex relative overflow-hidden h-[1.2em] w-auto align-bottom ${className}`}>
             <span
                 key={index}
-                className="absolute inset-0 flex items-center justify-center whitespace-nowrap animate-in slide-in-from-bottom fade-in duration-500"
+                className="absolute inset-0 flex items-center justify-center whitespace-nowrap animate-slide-up"
             >
                 {words[index]}
             </span>

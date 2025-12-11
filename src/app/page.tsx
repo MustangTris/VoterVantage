@@ -44,15 +44,15 @@ export default async function Home() {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 leading-tight">
-            Follow the <TextCarousel words={["Money", "Politicians", "Cities", "Lobbyists"]} className="text-purple-400 mx-2" /> <br className="hidden md:inline" />
+            Follow the <TextCarousel words={["Money", "Politicians", "Cities", "Donors"]} interval={3000} className="text-purple-400 mx-2" /> <br className="hidden md:inline" />
             in <span className="text-gradient drop-shadow-sm">
               Local Politics
             </span>
           </h1>
 
           <p className="max-w-2xl text-lg md:text-xl text-slate-300 mb-12 leading-relaxed">
-            VoterVantage is your only non-profit database of local political campaign finance disclosures.
-            We analyze Form 460 filings to show you exactly who is funding whom.
+            Proudly grassrooted in the <strong className="text-white">Coachella Valley</strong>, VoterVantage is your non-profit database for local political campaign finance.
+            We analyze Form 460 filings to show you exactly who is funding whom in our desert cities.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-6 w-full sm:w-auto">
@@ -109,15 +109,20 @@ export default async function Home() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="glass-panel p-8 rounded-2xl hover:bg-white/10 transition-colors duration-300 group">
-              <div className="h-14 w-14 rounded-xl bg-purple-500/20 flex items-center justify-center mb-6 text-purple-400 group-hover:scale-110 transition-transform duration-300 group-hover:shadow-[0_0_20px_rgba(168,85,247,0.4)]">
-                <FileSearch className="h-7 w-7" />
+            <Link href="/categories" className="block group">
+              <div className="glass-panel p-8 rounded-2xl hover:bg-white/10 transition-colors duration-300 h-full">
+                <div className="h-14 w-14 rounded-xl bg-purple-500/20 flex items-center justify-center mb-6 text-purple-400 group-hover:scale-110 transition-transform duration-300 group-hover:shadow-[0_0_20px_rgba(168,85,247,0.4)]">
+                  <FileSearch className="h-7 w-7" />
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-3">Detailed Profiles</h3>
+                <p className="text-slate-400 leading-relaxed">
+                  Deep dives into every candidate and donor. See complete financial backer breakdowns on our dashboards.
+                </p>
+                <div className="mt-4 flex items-center text-purple-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2 group-hover:translate-x-0 transform duration-300">
+                  View Categories <ArrowRight className="ml-2 h-4 w-4" />
+                </div>
               </div>
-              <h3 className="text-xl font-semibold text-white mb-3">Detailed Profiles</h3>
-              <p className="text-slate-400 leading-relaxed">
-                Deep dives into every candidate and lobbyist. See complete financial backer breakdowns on our dashboards.
-              </p>
-            </div>
+            </Link>
 
             <div className="glass-panel p-8 rounded-2xl hover:bg-white/10 transition-colors duration-300 group">
               <div className="h-14 w-14 rounded-xl bg-blue-500/20 flex items-center justify-center mb-6 text-blue-400 group-hover:scale-110 transition-transform duration-300 group-hover:shadow-[0_0_20px_rgba(59,130,246,0.4)]">

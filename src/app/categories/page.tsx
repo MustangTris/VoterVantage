@@ -36,6 +36,23 @@ export default function CategoriesPage() {
                         </div>
                     </Link>
 
+                    {/* Counties Card */}
+                    <Link href="/counties" className="group">
+                        <div className="glass-panel p-8 rounded-2xl h-full border border-white/5 bg-white/5 hover:bg-white/10 transition-all duration-300 hover:-translate-y-1">
+                            <div className="h-14 w-14 rounded-xl bg-orange-500/20 flex items-center justify-center mb-6 text-orange-400 group-hover:scale-110 transition-transform duration-300 group-hover:shadow-[0_0_20px_rgba(249,115,22,0.4)]">
+                                <Building2 className="h-7 w-7" />
+                            </div>
+                            <h2 className="text-2xl font-bold text-white mb-3 group-hover:text-orange-300 transition-colors">Counties</h2>
+                            <p className="text-slate-400 leading-relaxed mb-6">
+                                Explore county-level campaign finance data. Track supervisors, assessors, and other county officials.
+                            </p>
+                            <span className="text-sm font-medium text-orange-400 group-hover:text-orange-300 flex items-center gap-2">
+                                Explore Counties
+                                <span className="block w-4 h-[1px] bg-current group-hover:w-8 transition-all" />
+                            </span>
+                        </div>
+                    </Link>
+
                     {/* Politicians Card */}
                     <Link href="/politicians" className="group">
                         <div className="glass-panel p-8 rounded-2xl h-full border border-white/5 bg-white/5 hover:bg-white/10 transition-all duration-300 hover:-translate-y-1">
@@ -59,12 +76,12 @@ export default function CategoriesPage() {
                             <div className="h-14 w-14 rounded-xl bg-pink-500/20 flex items-center justify-center mb-6 text-pink-400 group-hover:scale-110 transition-transform duration-300 group-hover:shadow-[0_0_20px_rgba(236,72,153,0.4)]">
                                 <Briefcase className="h-7 w-7" />
                             </div>
-                            <h2 className="text-2xl font-bold text-white mb-3 group-hover:text-pink-300 transition-colors">Lobby Groups</h2>
+                            <h2 className="text-2xl font-bold text-white mb-3 group-hover:text-pink-300 transition-colors">Donors</h2>
                             <p className="text-slate-400 leading-relaxed mb-6">
-                                Investigate lobbying organizations and political action committees. See who they support and how much they spend.
+                                Investigate donors and funding entities. See who they support and how much they spend.
                             </p>
                             <span className="text-sm font-medium text-pink-400 group-hover:text-pink-300 flex items-center gap-2">
-                                Track Groups
+                                Track Donors
                                 <span className="block w-4 h-[1px] bg-current group-hover:w-8 transition-all" />
                             </span>
                         </div>

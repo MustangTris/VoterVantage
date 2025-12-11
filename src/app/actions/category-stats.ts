@@ -1,7 +1,6 @@
 'use server'
 
 import pool from "@/lib/db"
-import { cache } from 'react'
 
 export interface PoliticianOverviewStats {
     totalCandidates: number
@@ -21,7 +20,7 @@ export interface CityOverviewStats {
     topCitiesByRaised: { name: string; total_raised: number }[]
 }
 
-export const getPoliticianOverviewStats = cache(async (): Promise<PoliticianOverviewStats> => {
+export const getPoliticianOverviewStats = async (): Promise<PoliticianOverviewStats> => {
     const client = await pool.connect()
     try {
         // 1. Total Candidates
@@ -75,37 +74,36 @@ export const getPoliticianOverviewStats = cache(async (): Promise<PoliticianOver
     } finally {
         client.release()
     }
-})
+}
 
-export const getLobbyistOverviewStats = cache(async (): Promise<LobbyistOverviewStats> => {
+export const getLobbyistOverviewStats = async (): Promise<LobbyistOverviewStats> => {
     const client = await pool.connect()
     try {
         const countRes = await client.query("SELECT COUNT(*) FROM profiles WHERE type = 'LOBBYIST'")
         const totalLobbyists = parseInt(countRes.rows[0].count, 10)
 
-        // Total Spent (Expenditures or Contributions made by Lobbyists)
-        // If Lobbyists file Form 460, we sum EXPENDITURES ?
-        // Or if they are donors, we sum CONTRIBUTIONS where they are the source.
-        // Let's assume Lobby Groups file forms and we look at their expenditures/contributions.
+        // Total Spent (Contributions made BY Lobbyists to others)
+        // We look for transactions where entity_name matches a profile of type 'LOBBYIST'
         const spentRes = await client.query(`
             SELECT COALESCE(SUM(t.amount), 0) as total
             FROM transactions t
-            JOIN filings f ON t.filing_id = f.id
-            JOIN profiles p ON f.filer_name = p.name
-            WHERE p.type = 'LOBBYIST'
+            JOIN profiles p ON t.entity_name = p.name
+            WHERE p.type = 'LOBBYIST' AND t.transaction_type = 'CONTRIBUTION'
         `)
         const totalSpent = parseFloat(spentRes.rows[0].total)
 
+        // Top Spenders (Lobbyists who contributed the most)
         const topRes = await client.query(`
             SELECT p.id, p.name, COALESCE(SUM(t.amount), 0) as total_spent
             FROM profiles p
-            LEFT JOIN filings f ON p.name = f.filer_name
-            LEFT JOIN transactions t ON f.id = t.filing_id
+            LEFT JOIN transactions t ON p.name = t.entity_name AND t.transaction_type = 'CONTRIBUTION'
             WHERE p.type = 'LOBBYIST'
             GROUP BY p.id, p.name
+            HAVING COALESCE(SUM(t.amount), 0) > 0
             ORDER BY total_spent DESC
             LIMIT 5
         `)
+
         const topSpenders = topRes.rows.map(row => ({
             id: row.id,
             name: row.name,
@@ -120,9 +118,9 @@ export const getLobbyistOverviewStats = cache(async (): Promise<LobbyistOverview
     } finally {
         client.release()
     }
-})
+}
 
-export const getCityOverviewStats = cache(async (): Promise<CityOverviewStats> => {
+export const getCityOverviewStats = async (): Promise<CityOverviewStats> => {
     const client = await pool.connect()
     try {
         const countRes = await client.query("SELECT COUNT(*) FROM profiles WHERE type = 'CITY'") // Or distinct cities from profiles?
@@ -155,4 +153,83 @@ export const getCityOverviewStats = cache(async (): Promise<CityOverviewStats> =
     } finally {
         client.release()
     }
-})
+}
+
+export const getAllCities = async () => {
+    const client = await pool.connect()
+    try {
+        const res = await client.query(`
+            SELECT p.id, p.name, p.description
+            FROM profiles p
+            WHERE p.type = 'CITY'
+            ORDER BY p.name ASC
+        `)
+
+        return res.rows.map(row => ({
+            id: row.id,
+            name: row.name,
+            description: row.description,
+            active: true // For now assume all in DB are active
+        }))
+    } finally {
+        client.release()
+    }
+}
+
+export const getCountyOverviewStats = async (): Promise<CityOverviewStats> => {
+    const client = await pool.connect()
+    try {
+        const countRes = await client.query("SELECT COUNT(*) FROM profiles WHERE type = 'COUNTY'")
+        const totalCities = parseInt(countRes.rows[0].count, 10)
+
+        // Top Counties by Money
+        // Sum contributions for all politicians in that county
+        // Note: Politician profiles have 'city' column which currently acts as 'Jurisdiction Name'.
+        // For county politicians, this 'city' column maps to the County Name.
+        const topRes = await client.query(`
+            SELECT p.city, COALESCE(SUM(t.amount), 0) as total_raised
+            FROM profiles p
+            JOIN filings f ON p.name = f.filer_name
+            JOIN transactions t ON f.id = t.filing_id AND t.transaction_type = 'CONTRIBUTION'
+            LEFT JOIN profiles juris ON p.city = juris.name -- Join to check jurisdiction type
+            WHERE p.type = 'POLITICIAN' 
+              AND juris.type = 'COUNTY'
+            GROUP BY p.city
+            ORDER BY total_raised DESC
+            LIMIT 5
+        `)
+
+        const topCitiesByRaised = topRes.rows.map(row => ({
+            name: row.city,
+            total_raised: parseFloat(row.total_raised)
+        }))
+
+        return {
+            totalCities, // Reusing interface property name for consistency, though semantic is different
+            topCitiesByRaised
+        }
+    } finally {
+        client.release()
+    }
+}
+
+export const getAllCounties = async () => {
+    const client = await pool.connect()
+    try {
+        const res = await client.query(`
+            SELECT p.id, p.name, p.description
+            FROM profiles p
+            WHERE p.type = 'COUNTY'
+            ORDER BY p.name ASC
+        `)
+
+        return res.rows.map(row => ({
+            id: row.id,
+            name: row.name,
+            description: row.description,
+            active: true
+        }))
+    } finally {
+        client.release()
+    }
+}

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { FaGoogle } from "react-icons/fa"
+
 import Link from "next/link"
 import { useFormStatus } from "react-dom"
 import { useActionState, useEffect } from "react"
@@ -80,26 +80,7 @@ export default function LoginPage() {
                         <LoginButton />
                     </form>
 
-                    <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                            <span className="w-full border-t border-white/10" />
-                        </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-transparent px-2 text-slate-400 backdrop-blur-md">
-                                Or continue with
-                            </span>
-                        </div>
-                    </div>
 
-                    <Button
-                        className="w-full border-white/10 text-white bg-transparent hover:bg-white/10 hover:text-white"
-                        variant="outline"
-                        type="button"
-                        onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-                    >
-                        <FaGoogle className="mr-2 h-4 w-4" />
-                        Sign in with Google
-                    </Button>
                 </CardContent>
                 <CardFooter className="flex justify-center">
                     <div className="text-sm text-slate-400">

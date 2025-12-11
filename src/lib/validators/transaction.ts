@@ -5,6 +5,9 @@ export const TransactionSchema = z.object({
     Filer_NamL: z.string().optional(),
     Filer_ID: z.string().optional(),
 
+    // Entity / Contributor Split Name
+    Entity_NamF: z.string().optional(),
+
     // Transaction Fields
     Entity_Name: z.string().min(1, "Name is required"),
     Amount: z.number(),
@@ -26,9 +29,40 @@ export const TransactionSchema = z.object({
     Tran_City: z.string().optional().nullable(),
     Tran_State: z.string().optional().nullable(),
     Tran_Zip4: z.string().optional().nullable(),
+    Tran_Adr1: z.string().optional().nullable(),
+    Tran_Adr2: z.string().optional().nullable(),
     Tran_Emp: z.string().optional().nullable(),
     Tran_Occ: z.string().optional().nullable(),
     Rec_Type: z.enum(['CONTRIBUTION', 'EXPENDITURE', 'UNKNOWN']).optional().default('UNKNOWN'),
+
+    // Treasurer Info
+    Tres_NamL: z.string().optional().nullable(),
+    Tres_NamF: z.string().optional().nullable(),
+    Tres_NamT: z.string().optional().nullable(),
+    Tres_NamS: z.string().optional().nullable(),
+    Tres_Adr1: z.string().optional().nullable(),
+    Tres_Adr2: z.string().optional().nullable(),
+    Tres_City: z.string().optional().nullable(),
+    Tres_ST: z.string().optional().nullable(),
+    Tres_ZIP4: z.string().optional().nullable(),
+
+    // Intermediary Info
+    Intr_NamL: z.string().optional().nullable(),
+    Intr_NamF: z.string().optional().nullable(),
+    Intr_NamT: z.string().optional().nullable(),
+    Intr_NamS: z.string().optional().nullable(),
+    Intr_Adr1: z.string().optional().nullable(),
+    Intr_Adr2: z.string().optional().nullable(),
+    Intr_City: z.string().optional().nullable(),
+    Intr_ST: z.string().optional().nullable(),
+    Intr_ZIP4: z.string().optional().nullable(),
+    Intr_Emp: z.string().optional().nullable(),
+    Intr_Occ: z.string().optional().nullable(),
+
+    // Memo / Admin
+    Memo_Code: z.string().optional().nullable(),
+    Memo_RefNo: z.string().optional().nullable(),
+    Tran_ID: z.string().optional().nullable(), // External ID
 })
 
 export type Transaction = z.infer<typeof TransactionSchema>

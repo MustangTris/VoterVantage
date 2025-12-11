@@ -84,7 +84,6 @@ export async function authenticate(
                     return "Something went wrong."
             }
         }
-        // For debugging: return the actual error message if not an AuthError
-        return `System Error: ${(error as Error).message}`;
+        throw error;
     }
 }

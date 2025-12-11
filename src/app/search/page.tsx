@@ -7,6 +7,8 @@ import { Search, TrendingUp, ArrowRight, FileText, User, Building2, Banknote } f
 import { useState, useEffect } from "react"
 import { searchDatabase, SearchResult, getConnectedCities } from "./actions"
 import dynamic from 'next/dynamic'
+import { useSearchParams } from "next/navigation"
+import { Suspense } from "react"
 
 const SoCalMap = dynamic(() => import('@/components/SoCalMap'), {
     ssr: false,
@@ -18,17 +20,42 @@ const SoCalMap = dynamic(() => import('@/components/SoCalMap'), {
 })
 
 export default function SearchPage() {
-    const [query, setQuery] = useState("")
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-[#030014]" />}>
+            <SearchPageContent />
+        </Suspense>
+    )
+}
+
+function SearchPageContent() {
+    const searchParams = useSearchParams()
+    const initialQuery = searchParams.get("q") || ""
+    const [query, setQuery] = useState(initialQuery)
     const [results, setResults] = useState<SearchResult[]>([])
     const [isSearching, setIsSearching] = useState(false)
-    const [hasSearched, setHasSearched] = useState(false)
+    const [hasSearched, setHasSearched] = useState(!!initialQuery)
     const [connectedCities, setConnectedCities] = useState<string[]>([])
 
     useEffect(() => {
         getConnectedCities().then(cities => {
             setConnectedCities(cities)
         })
-    }, [])
+
+        // Auto-search if query exists
+        if (initialQuery) {
+            setIsSearching(true)
+            searchDatabase(initialQuery)
+                .then(data => {
+                    setResults(data)
+                })
+                .catch(error => {
+                    console.error("Search failed", error)
+                })
+                .finally(() => {
+                    setIsSearching(false)
+                })
+        }
+    }, [initialQuery])
 
     const trendingSearches = [
         "Palm Springs City Council",
@@ -97,7 +124,7 @@ export default function SearchPage() {
                         <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-6 w-6 text-slate-400" />
                         <input
                             type="text"
-                            placeholder="Search politicians, measures, cities..."
+                            placeholder="Search politicians, donors, measures..."
                             className="w-full h-16 md:h-20 bg-white/5 border border-white/10 rounded-full pl-16 pr-6 text-lg md:text-xl text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all shadow-xl"
                             autoFocus
                             value={query}
@@ -125,29 +152,45 @@ export default function SearchPage() {
                         </div>
 
                         <div className="grid gap-4">
-                            {results.map((result) => (
-                                <div
-                                    key={result.id}
-                                    className="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/10 transition-colors cursor-pointer group"
-                                >
-                                    <div className="flex items-start gap-4">
-                                        <div className="p-3 rounded-full bg-white/5 group-hover:bg-white/10 transition-colors">
-                                            {getIconForType(result.type)}
-                                        </div>
-                                        <div>
-                                            <h3 className="text-lg font-semibold text-white mb-1 group-hover:text-purple-400 transition-colors">
-                                                {result.title}
-                                            </h3>
-                                            <div className="flex items-center gap-3 text-sm text-slate-400">
-                                                <span className="bg-white/10 px-2 py-0.5 rounded text-xs uppercase tracking-wider">
-                                                    {result.type}
-                                                </span>
-                                                <span>{result.description}</span>
+                            {results.map((result) => {
+                                const getLink = (type: string, id: string) => {
+                                    switch (type) {
+                                        case 'POLITICIAN': return `/politicians/${id}`
+                                        case 'CITY': return `/cities/${id}`
+                                        case 'LOBBYIST': return `/lobby-groups/${id}`
+                                        default: return '#'
+                                    }
+                                }
+
+                                return (
+                                    <Link
+                                        key={result.id}
+                                        href={getLink(result.type, result.id)}
+                                        className="block"
+                                    >
+                                        <div
+                                            className="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/10 transition-colors cursor-pointer group"
+                                        >
+                                            <div className="flex items-start gap-4">
+                                                <div className="p-3 rounded-full bg-white/5 group-hover:bg-white/10 transition-colors">
+                                                    {getIconForType(result.type)}
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-lg font-semibold text-white mb-1 group-hover:text-purple-400 transition-colors">
+                                                        {result.title}
+                                                    </h3>
+                                                    <div className="flex items-center gap-3 text-sm text-slate-400">
+                                                        <span className="bg-white/10 px-2 py-0.5 rounded text-xs uppercase tracking-wider">
+                                                            {result.type === 'LOBBYIST' ? 'DONOR' : result.type}
+                                                        </span>
+                                                        <span>{result.description}</span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                            ))}
+                                    </Link>
+                                )
+                            })}
                         </div>
                     </div>
                 )}
@@ -173,7 +216,7 @@ export default function SearchPage() {
                         </Link>
                         <Link href="/lobby-groups">
                             <div className="glass-panel p-4 rounded-xl hover:bg-white/10 transition-all cursor-pointer flex items-center justify-between group border border-white/5 hover:border-green-500/30">
-                                <span className="text-white font-medium">Lobby Groups</span>
+                                <span className="text-white font-medium">Donors</span>
                                 <ArrowRight className="h-4 w-4 text-slate-500 group-hover:text-green-400 transition-colors" />
                             </div>
                         </Link>

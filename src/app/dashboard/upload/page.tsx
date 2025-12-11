@@ -13,7 +13,7 @@ import { DebugConsole } from "@/components/debug-console"
 import { createClient } from "@/lib/supabase/client"
 import { TransactionSchema, cleanRow } from "@/lib/validators/transaction"
 import { authAction } from "./actions"
-import { createFilingHeader, importTransactionBatch } from "./server-actions"
+import { createFilingHeader, importTransactionBatch, finalizeFiling } from "./server-actions"
 
 // --- Configuration ---
 type FieldDefinition = {
@@ -27,16 +27,40 @@ type FieldDefinition = {
 const REQUIRED_FIELDS: FieldDefinition[] = [
     { key: "Filer_NamL", label: "Filer Name", description: "Campaign/Committee Name", required: false, aliases: ["filer_naml", "filer", "committee", "candidate"] },
     { key: "Filer_ID", label: "Filer ID", description: "State/City ID", required: false, aliases: ["filer_id", "id"] },
-    { key: "Entity_Name", label: "Contributor/Payee", description: "Who gave/received money", required: true, aliases: ["tran_naml", "tran_nam", "payee_naml", "payee_nams", "bal_name", "payee", "contributor", "name", "entity"] },
+    { key: "Entity_Name", label: "Contributor/Payee (Last/Full)", description: "Who gave/received money", required: true, aliases: ["tran_naml", "tran_nam", "payee_naml", "payee_nams", "bal_name", "enty_naml", "payee", "contributor", "name", "entity", "recipient", "vendor", "beneficiary", "organization", "payee_name"] },
+    { key: "Entity_NamF", label: "Contributor First Name", description: "First Name (if split)", required: false, aliases: ["tran_namf", "payee_namf", "enty_namf", "fname", "first_name", "contributor_first", "recipient_first", "vendor_first", "payee_first"] },
+    { key: "Entity_Cd", label: "Entity Code", description: "Entity type (IND/COM/OTH/SCC)", required: false, aliases: ["entity_cd", "entitycd", "entity_code"] },
     { key: "Amount", label: "Amount", description: "Transaction value", required: true, aliases: ["tran_amt1", "tran_amt2", "amount", "amt", "payment", "received"] },
-    { key: "Tran_Date", label: "Date", description: "Transaction Date", required: false, aliases: ["tran_date", "date", "time", "day", "rpt_date"] },
+    { key: "Tran_Date", label: "Date", description: "Transaction Date", required: false, aliases: ["tran_date", "expn_date", "ctrib_date", "date", "time", "day", "rpt_date"] },
     // Expanded Fields
-    { key: "Tran_Adr1", label: "Address", description: "Street Address", required: false, aliases: ["tran_adr1", "addr", "street", "address"] },
-    { key: "Tran_City", label: "City", description: "City", required: false, aliases: ["tran_city", "city"] },
-    { key: "Tran_State", label: "State", description: "State", required: false, aliases: ["tran_state", "state"] },
-    { key: "Tran_Zip4", label: "Zip Code", description: "Zip Code", required: false, aliases: ["tran_zip4", "zip", "postal"] },
-    { key: "Tran_Emp", label: "Employer", description: "Contributor Employer", required: false, aliases: ["tran_emp", "employer", "emp"] },
-    { key: "Tran_Occ", label: "Occupation", description: "Contributor Occupation", required: false, aliases: ["tran_occ", "occupation", "occ", "job"] },
+    { key: "Tran_Adr1", label: "Address", description: "Street Address", required: false, aliases: ["tran_adr1", "payee_adr1", "enty_adr1", "addr", "street", "address"] },
+    { key: "Tran_City", label: "City", description: "City", required: false, aliases: ["tran_city", "payee_city", "enty_city", "city"] },
+    { key: "Tran_State", label: "State", description: "State", required: false, aliases: ["tran_state", "payee_state", "enty_st", "state"] },
+    { key: "Tran_Zip4", label: "Zip Code", description: "Zip Code", required: false, aliases: ["tran_zip4", "payee_zip4", "payee_zip", "enty_zip4", "zip", "postal"] },
+    { key: "Tran_Adr1", label: "Address Line 1", description: "Street Address", required: false, aliases: ["tran_adr1", "addr1", "address1", "street", "address"] },
+    { key: "Tran_Adr2", label: "Address Line 2", description: "Apt/Suite/Unit", required: false, aliases: ["tran_adr2", "payee_adr2", "enty_adr2", "addr2", "address2", "apt", "suite", "unit"] },
+    { key: "Tran_Emp", label: "Employer", description: "Contributor Employer", required: false, aliases: ["tran_emp", "ctrib_emp", "employer", "emp"] },
+    { key: "Tran_Occ", label: "Occupation", description: "Contributor Occupation", required: false, aliases: ["tran_occ", "ctrib_occ", "occupation", "occ", "job"] },
+
+    // --- Treasurer (Committees) ---
+    { key: "Tres_NamL", label: "Treasurer Last Name", description: "Treasurer Last Name", required: false, aliases: ["tres_naml"] },
+    { key: "Tres_NamF", label: "Treasurer First Name", description: "Treasurer First Name", required: false, aliases: ["tres_namf"] },
+    { key: "Tres_Adr1", label: "Treasurer Address 1", description: "Treasurer Address", required: false, aliases: ["tres_adr1"] },
+    { key: "Tres_City", label: "Treasurer City", description: "Treasurer City", required: false, aliases: ["tres_city"] },
+    { key: "Tres_ST", label: "Treasurer State", description: "Treasurer State", required: false, aliases: ["tres_st"] },
+    { key: "Tres_ZIP4", label: "Treasurer Zip", description: "Treasurer Zip", required: false, aliases: ["tres_zip4"] },
+
+    // --- Intermediary ---
+    { key: "Intr_NamL", label: "Intermediary Last Name", description: "Intermediary Last Name", required: false, aliases: ["intr_naml"] },
+    { key: "Intr_NamF", label: "Intermediary First Name", description: "Intermediary First Name", required: false, aliases: ["intr_namf"] },
+    { key: "Intr_Adr1", label: "Intermediary Address 1", description: "Intermediary Address", required: false, aliases: ["intr_adr1"] },
+    { key: "Intr_City", label: "Intermediary City", description: "Intermediary City", required: false, aliases: ["intr_city"] },
+    { key: "Intr_Emp", label: "Intermediary Employer", description: "Intermediary Employer", required: false, aliases: ["intr_emp"] },
+
+    // --- Memo / Admin ---
+    { key: "Memo_Code", label: "Memo Code", description: "Memo / Description Code", required: false, aliases: ["memo_code"] },
+    { key: "Memo_RefNo", label: "Memo Ref No", description: "Reference Number", required: false, aliases: ["memo_refno"] },
+    { key: "Tran_ID", label: "Transaction ID", description: "External ID", required: false, aliases: ["tran_id"] },
 ]
 
 // --- Utils ---
@@ -45,6 +69,17 @@ const detectSheetType = (name: string): 'CONTRIBUTION' | 'EXPENDITURE' | 'UNKNOW
     if (n.match(/(expend|payment|bill|expense|sched e|schedule e|disbursement|expn)/)) return 'EXPENDITURE'
     if (n.match(/(receipt|contrib|donation|sched a|schedule a|rcpt|income)/)) return 'CONTRIBUTION'
     return 'UNKNOWN'
+}
+
+// Detect entity code from sheet name (IND, COM, OTH, SCC)
+const detectEntityCode = (name: string): string | null => {
+    const n = name.toUpperCase()
+    // Check for explicit entity code patterns
+    if (n.match(/\bIND\b/)) return 'IND' // Individual
+    if (n.match(/\bCOM\b/)) return 'COM' // Committee
+    if (n.match(/\bSCC\b/)) return 'SCC' // Small Contributor Committee
+    if (n.match(/\bOTH\b/)) return 'OTH' // Other
+    return null
 }
 
 const generateAutoMapping = (headers: string[]): Record<string, string> => {
@@ -101,6 +136,7 @@ type ProcessedSheet = {
     headers: string[]
     rows: any[]
     mapping: Record<string, string>
+    entityCode?: string | null // Entity code detected from sheet name
 }
 
 type WizardStep = "UPLOAD" | "MAP" | "PREVIEW"
@@ -147,6 +183,8 @@ export default function UploadPage() {
     const [isProcessing, setIsProcessing] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [chunkProgress, setChunkProgress] = useState<string | null>(null)
+    const [jurisdiction, setJurisdiction] = useState("")
+    const [jurisdictionType, setJurisdictionType] = useState<"CITY" | "COUNTY">("CITY")
 
     // Multi-Sheet State
     const [processedSheets, setProcessedSheets] = useState<ProcessedSheet[]>([])
@@ -160,6 +198,7 @@ export default function UploadPage() {
         setError(null)
         setProcessedSheets([])
         setActiveSheetIdx(0)
+        // Reset jurisdiction if needed, or keep it per user preference? Let's keep it.
 
         if (selectedFile.name.endsWith(".pdf")) {
             // PDFs skip mapping/validation
@@ -183,13 +222,15 @@ export default function UploadPage() {
                         const rows = results.data
                         if (rows.length > 0) {
                             const mapping = generateAutoMapping(headers)
+                            const entityCode = detectEntityCode(selectedFile.name)
                             setProcessedSheets([{
                                 id: "csv-main",
                                 name: selectedFile.name,
                                 type: detectSheetType(selectedFile.name),
                                 headers,
                                 rows,
-                                mapping
+                                mapping,
+                                entityCode // Also detect entity code from CSV filename
                             }])
                             setStep("MAP")
                         } else {
@@ -214,6 +255,7 @@ export default function UploadPage() {
 
                 wb.SheetNames.forEach(sheetName => {
                     const type = detectSheetType(sheetName)
+                    const entityCode = detectEntityCode(sheetName)
                     const ws = wb.Sheets[sheetName]
                     const json = XLSX.utils.sheet_to_json(ws, { defval: "" }) as any[]
 
@@ -227,7 +269,8 @@ export default function UploadPage() {
                             type,
                             headers,
                             rows: json,
-                            mapping
+                            mapping,
+                            entityCode // Store entity code for later use
                         })
                     }
                 })
@@ -290,8 +333,8 @@ export default function UploadPage() {
         try {
             console.log("Starting validation...", processedSheets)
             processedSheets.forEach(sheet => {
-                const { mapping, rows, type } = sheet
-                console.log(`Processing sheet ${sheet.name} with ${rows?.length} rows`)
+                const { mapping, rows, type, entityCode } = sheet
+                console.log(`Processing sheet ${sheet.name} with ${rows?.length} rows, entityCode: ${entityCode}`)
 
                 // Skip validation for unknown sheet types (like Summary, 497, etc.)
                 if (type === 'UNKNOWN') {
@@ -320,6 +363,11 @@ export default function UploadPage() {
                     // Inject Rec_Type if known (and not overridden)
                     if (!mappedRow['Rec_Type']) {
                         mappedRow['Rec_Type'] = type
+                    }
+
+                    // Inject Entity_Cd: prioritize mapped column, then sheet name detection, then null
+                    if (!mappedRow['Entity_Cd'] && entityCode) {
+                        mappedRow['Entity_Cd'] = entityCode
                     }
 
                     // 2. Pre-clean
@@ -369,6 +417,11 @@ export default function UploadPage() {
 
     const handleSubmit = async () => {
         if (!file) return
+        if (!jurisdiction) {
+            alert("Please enter the Jurisdiction City/County so we can correctly link the politician.")
+            return
+        }
+
         setIsProcessing(true)
         setChunkProgress("Starting upload...")
         setError(null)
@@ -405,10 +458,33 @@ export default function UploadPage() {
             setChunkProgress("File archived. Starting import...")
 
             // 2. Database Insert (Chunked)
-            const payload = file.name.endsWith(".pdf") ? [] : validatedData.valid
+            let payload = file.name.endsWith(".pdf") ? [] : validatedData.valid
 
-            // 2a. Validate Payload Types
-            if (payload.length > 0) {
+            // 2a. Validate Payload
+            if (!file.name.endsWith(".pdf")) {
+                // Check for empty data
+                if (payload.length === 0) {
+                    if (processedSheets.length === 0) {
+                        throw new Error("No data found! We could not detect any valid sheets. Please ensure your sheet names contain 'Contribution' or 'Expenditure'.")
+                    } else {
+                        throw new Error("No valid records found! Check your column headers. We need at least 'Amount' and 'Entity_Name' (Payee/Contributor).")
+                    }
+                }
+
+                // Deduplicate by Tran_ID (External ID)
+                const uniquePayload: any[] = [];
+                const seenIds = new Set();
+                for (const row of payload) {
+                    if (row.Tran_ID) {
+                        if (seenIds.has(row.Tran_ID)) continue;
+                        seenIds.add(row.Tran_ID);
+                    }
+                    uniquePayload.push(row);
+                }
+                console.log(`Deduplicated: ${payload.length} -> ${uniquePayload.length} records`)
+                payload = uniquePayload;
+
+                // Check Types
                 const unknownTypes = payload.filter(p => !['CONTRIBUTION', 'EXPENDITURE'].includes(p.Rec_Type || ''))
                 if (unknownTypes.length > 0) {
                     throw new Error(`Found ${unknownTypes.length} records with Unknown/Invalid Transaction Type. Please select a valid Sheet Type (Contribution or Expenditure) in the Map step.`)
@@ -425,7 +501,8 @@ export default function UploadPage() {
                 const filingResult = await createFilingHeader({
                     filer_name: payload.length > 0 ? (payload[0].Filer_NamL || 'Unknown Filer') : file.name,
                     source_file_url: storagePath,
-                    uploaded_by: userId
+                    uploaded_by: userId,
+                    fileName: file.name
                 })
 
                 if (!filingResult.success || !filingResult.filingId) {
@@ -440,24 +517,53 @@ export default function UploadPage() {
                         filing_id: filingId,
                         transaction_type: row.Rec_Type,
 
-                        entity_name: row.Entity_Name,
+                        entity_name: row.Entity_NamF ? `${row.Entity_NamF} ${row.Entity_Name}` : row.Entity_Name,
+                        entity_cd: row.Entity_Cd || null, // Entity code from sheet name
                         amount: row.Amount,
                         transaction_date: row.Tran_Date,
 
                         entity_city: row.Tran_City,
                         entity_state: row.Tran_State,
                         entity_zip: row.Tran_Zip4,
+                        entity_adr1: row.Tran_Adr1,
+                        entity_adr2: row.Tran_Adr2,
                         contributor_employer: row.Tran_Emp,
                         contributor_occupation: row.Tran_Occ,
+
+                        // Treasurer
+                        treasurer_last_name: row.Tres_NamL,
+                        treasurer_first_name: row.Tres_NamF,
+                        treasurer_adr1: row.Tres_Adr1,
+                        treasurer_city: row.Tres_City,
+                        treasurer_state: row.Tres_ST,
+                        treasurer_zip: row.Tres_ZIP4,
+
+                        // Intermediary
+                        intermediary_last_name: row.Intr_NamL,
+                        intermediary_first_name: row.Intr_NamF,
+                        intermediary_adr1: row.Intr_Adr1,
+                        intermediary_city: row.Intr_City,
+                        intermediary_employer: row.Intr_Emp,
+
+                        // Memo
+                        memo_code: row.Memo_Code,
+                        memo_refno: row.Memo_RefNo,
+                        external_id: row.Tran_ID,
 
                         description: "Imported via Client Upload"
                     }))
 
-                    const batchResult = await importTransactionBatch(filingId, batch)
+                    const batchResult = await importTransactionBatch(filingId, batch, jurisdiction, jurisdictionType)
 
                     if (!batchResult.success) {
                         throw new Error(`Batch insert failed: ${batchResult.error}`)
                     }
+                }
+
+                // 2d. Finalize Filing (Calculate Totals & Status)
+                if (filingId) {
+                    setChunkProgress("Finalizing filing...")
+                    await finalizeFiling(filingId)
                 }
             }
 
@@ -466,6 +572,7 @@ export default function UploadPage() {
             setFile(null)
             setProcessedSheets([])
             setChunkProgress(null)
+            setJurisdiction("")
 
         } catch (err: any) {
             console.error("Upload Error:", err)
@@ -490,6 +597,37 @@ export default function UploadPage() {
                 <h1 className="text-2xl font-bold text-white">Upload Data</h1>
                 <p className="text-slate-400">Upload Excel/CSV files or PDF filings.</p>
             </div>
+
+            <GlassCard className="p-6 border-white/10 bg-white/5 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="col-span-1">
+                        <label className="text-sm font-medium text-slate-300 block mb-2">Type</label>
+                        <Select
+                            value={jurisdictionType}
+                            onValueChange={(val: "CITY" | "COUNTY") => setJurisdictionType(val)}
+                        >
+                            <SelectTrigger className="w-full bg-black/40 border border-white/10 text-white">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-slate-900 border-white/10 text-white">
+                                <SelectItem value="CITY">City</SelectItem>
+                                <SelectItem value="COUNTY">County</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="col-span-2">
+                        <label className="text-sm font-medium text-slate-300 block mb-2">Jurisdiction Name</label>
+                        <input
+                            type="text"
+                            placeholder={jurisdictionType === 'CITY' ? "e.g. Indio, Palm Springs" : "e.g. Riverside County"}
+                            value={jurisdiction}
+                            onChange={(e) => setJurisdiction(e.target.value)}
+                            className="w-full bg-black/40 border border-white/10 rounded-md px-4 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                        />
+                        <p className="text-xs text-slate-500 mt-1">Required. Links politician to this {jurisdictionType.toLowerCase()}.</p>
+                    </div>
+                </div>
+            </GlassCard>
 
             <GlassCard
                 className={cn(

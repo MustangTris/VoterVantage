@@ -5,12 +5,16 @@ import { cache } from 'react'
 
 export interface CityStats {
     totalRaised: number
-    activeMeasures: number
+
     candidatesCount: number
-    lobbyistsCount: number
+    donorsCount: number
     fundraisingTrend: { date: string; amount: number }[]
     donorComposition: { name: string; value: number; color: string }[]
+    topDonors: { name: string; amount: number; id?: string; type?: string }[]
+    topRecipients: { name: string; amount: number; id?: string; type?: string }[]
+    topExpenditures: { name: string; amount: number; id?: string; type?: string }[]
 }
+
 
 export interface LandingStats {
     citiesCount: number
@@ -44,7 +48,7 @@ export const getLandingPageStats = cache(async (): Promise<LandingStats> => {
     }
 })
 
-export const getCityStats = cache(async (cityName: string): Promise<CityStats> => {
+export const getCityStats = async (cityName: string): Promise<CityStats> => {
     let client;
     try {
         client = await pool.connect()
@@ -79,31 +83,29 @@ export const getCityStats = cache(async (cityName: string): Promise<CityStats> =
             SELECT COALESCE(SUM(f.total_contributions), 0) as total
             FROM filings f
             JOIN profiles p ON f.filer_name = p.name
-            WHERE p.city = $1
+            WHERE p.city ILIKE $1
         `, [cityName])
 
         const totalRaised = parseFloat(totalRaisedRes.rows[0].total)
 
-        // 2. Active Measures
-        const measuresRes = await client.query(`
-            SELECT COUNT(*) FROM measures 
-            WHERE city = $1 AND status = 'ACTIVE'
-        `, [cityName])
-        const activeMeasures = parseInt(measuresRes.rows[0].count, 10)
+
 
         // 3. Candidates Count
         const candidatesRes = await client.query(`
             SELECT COUNT(*) FROM profiles 
-            WHERE city = $1 AND type = 'POLITICIAN'
+            WHERE city ILIKE $1 AND type = 'POLITICIAN'
         `, [cityName])
         const candidatesCount = parseInt(candidatesRes.rows[0].count, 10)
 
-        // 4. Lobbyists Count
-        const lobbyistsRes = await client.query(`
-            SELECT COUNT(*) FROM profiles 
-            WHERE city = $1 AND type = 'LOBBYIST'
+        // 4. Donors Count (Unique entities donating to politicians in this city)
+        const donorsRes = await client.query(`
+            SELECT COUNT(DISTINCT t.entity_name)
+            FROM transactions t
+            JOIN filings f ON t.filing_id = f.id
+            JOIN profiles p ON f.filer_name = p.name
+            WHERE p.city ILIKE $1 AND t.transaction_type = 'CONTRIBUTION'
         `, [cityName])
-        const lobbyistsCount = parseInt(lobbyistsRes.rows[0].count, 10)
+        const donorsCount = parseInt(donorsRes.rows[0].count, 10)
 
         // 5. Fundraising Trend (Aggregated by Year for simplicity or Month)
         // Schema: transactions has `transaction_date`
@@ -115,7 +117,7 @@ export const getCityStats = cache(async (cityName: string): Promise<CityStats> =
             FROM transactions t
             JOIN filings f ON t.filing_id = f.id
             JOIN profiles p ON f.filer_name = p.name
-            WHERE p.city = $1 AND t.transaction_type = 'CONTRIBUTION'
+            WHERE p.city ILIKE $1 AND t.transaction_type = 'CONTRIBUTION'
             GROUP BY 1
             ORDER BY 1 ASC
         `
@@ -134,7 +136,7 @@ export const getCityStats = cache(async (cityName: string): Promise<CityStats> =
             FROM transactions t
             JOIN filings f ON t.filing_id = f.id
             JOIN profiles p ON f.filer_name = p.name
-            WHERE p.city = $1 AND t.transaction_type = 'CONTRIBUTION'
+            WHERE p.city ILIKE $1 AND t.transaction_type = 'CONTRIBUTION'
             GROUP BY t.entity_cd
         `
         const sourceRes = await client.query(sourceQuery, [cityName])
@@ -160,52 +162,120 @@ export const getCityStats = cache(async (cityName: string): Promise<CityStats> =
             color: colorMap[row.entity_cd] || colorMap['default']
         }))
 
+        // 7. Top Donors (Entities donating to city candidates)
+        const topDonorsRes = await client.query(`
+            SELECT 
+                t.entity_name,
+                SUM(t.amount) as total,
+                MAX(p_entity.id::text) as id,
+                MAX(p_entity.type) as type
+            FROM transactions t
+            JOIN filings f ON t.filing_id = f.id
+            JOIN profiles p ON f.filer_name = p.name
+            LEFT JOIN profiles p_entity ON t.entity_name = p_entity.name
+            WHERE p.city ILIKE $1 AND t.transaction_type = 'CONTRIBUTION'
+            GROUP BY t.entity_name
+            ORDER BY total DESC
+            LIMIT 5
+        `, [cityName])
+        const topDonors = topDonorsRes.rows.map(row => ({
+            name: row.entity_name,
+            amount: parseFloat(row.total),
+            id: row.id,
+            type: row.type
+        }))
+
+        // 8. Top Recipients (Candidates raising money in city)
+        const topRecipientsRes = await client.query(`
+            SELECT 
+                f.filer_name,
+                SUM(f.total_contributions) as total,
+                MAX(p.id::text) as id,
+                MAX(p.type) as type
+            FROM filings f
+            JOIN profiles p ON f.filer_name = p.name
+            WHERE p.city ILIKE $1
+            GROUP BY f.filer_name
+            ORDER BY total DESC
+            LIMIT 5
+        `, [cityName])
+        const topRecipients = topRecipientsRes.rows.map(row => ({
+            name: row.filer_name,
+            amount: parseFloat(row.total),
+            id: row.id,
+            type: row.type || 'POLITICIAN'
+        }))
+
+        // 9. Top Expenditures (Vendors paid by city candidates)
+        const topExpendituresRes = await client.query(`
+            SELECT 
+                t.entity_name,
+                SUM(t.amount) as total,
+                MAX(p_entity.id::text) as id, 
+                MAX(p_entity.type) as type
+            FROM transactions t
+            JOIN filings f ON t.filing_id = f.id
+            JOIN profiles p ON f.filer_name = p.name
+            LEFT JOIN profiles p_entity ON t.entity_name = p_entity.name
+            WHERE p.city ILIKE $1 AND t.transaction_type = 'EXPENDITURE'
+            GROUP BY t.entity_name
+            ORDER BY total DESC
+            LIMIT 5
+        `, [cityName])
+        const topExpenditures = topExpendituresRes.rows.map(row => ({
+            name: row.entity_name,
+            amount: parseFloat(row.total),
+            id: row.id,
+            type: row.type
+        }))
+
         return {
             totalRaised,
-            activeMeasures,
+
             candidatesCount,
-            lobbyistsCount,
+            donorsCount,
             fundraisingTrend,
-            donorComposition
+            donorComposition,
+            topDonors,
+            topRecipients,
+            topExpenditures
         }
 
     } catch (error) {
         console.error(`Error fetching stats for ${cityName}:`, error)
         return {
             totalRaised: 0,
-            activeMeasures: 0,
+
             candidatesCount: 0,
-            lobbyistsCount: 0,
+            donorsCount: 0,
             fundraisingTrend: [],
-            donorComposition: []
+            donorComposition: [],
+            topDonors: [],
+            topRecipients: [],
+            topExpenditures: []
         }
     } finally {
         if (client) client.release()
     }
-})
+}
 
 export const getPoliticianStats = cache(async (politicianName: string) => {
     let client;
+
     try {
+
         client = await pool.connect()
 
         // 1. Total Raised
         const raisedRes = await client.query(`
             SELECT COALESCE(SUM(total_contributions), 0) as total
             FROM filings 
-            WHERE filer_name = $1
+            WHERE filer_name ILIKE $1
         `, [politicianName])
         const totalRaised = parseFloat(raisedRes.rows[0].total)
 
-        // 2. Cash on Hand (latest filing)
-        const cashRes = await client.query(`
-            SELECT cash_on_hand 
-            FROM filings 
-            WHERE filer_name = $1
-            ORDER BY report_period_end DESC 
-            LIMIT 1
-        `, [politicianName])
-        const cashOnHand = cashRes.rows.length > 0 ? parseFloat(cashRes.rows[0].cash_on_hand) : 0
+
+
 
         // 3. Donor Count
         // Distinct entities who contributed to filings by this politician
@@ -213,7 +283,7 @@ export const getPoliticianStats = cache(async (politicianName: string) => {
             SELECT COUNT(DISTINCT entity_name) 
             FROM transactions t
             JOIN filings f ON t.filing_id = f.id
-            WHERE f.filer_name = $1 AND t.transaction_type = 'CONTRIBUTION'
+            WHERE f.filer_name ILIKE $1 AND t.transaction_type = 'CONTRIBUTION'
         `, [politicianName])
         const donorCount = parseInt(donorsRes.rows[0].count, 10)
 
@@ -224,7 +294,7 @@ export const getPoliticianStats = cache(async (politicianName: string) => {
                 SUM(t.amount) as amount
             FROM transactions t
             JOIN filings f ON t.filing_id = f.id
-            WHERE f.filer_name = $1 AND t.transaction_type = 'CONTRIBUTION'
+            WHERE f.filer_name ILIKE $1 AND t.transaction_type = 'CONTRIBUTION'
             GROUP BY 1
             ORDER BY 1 ASC
         `, [politicianName])
@@ -240,7 +310,7 @@ export const getPoliticianStats = cache(async (politicianName: string) => {
                 SUM(t.amount) as value
             FROM transactions t
             JOIN filings f ON t.filing_id = f.id
-            WHERE f.filer_name = $1 AND t.transaction_type = 'CONTRIBUTION'
+            WHERE f.filer_name ILIKE $1 AND t.transaction_type = 'CONTRIBUTION'
             GROUP BY t.entity_cd
         `
         const sourceRes = await client.query(sourceQuery, [politicianName])
@@ -264,17 +334,81 @@ export const getPoliticianStats = cache(async (politicianName: string) => {
             color: colorMap[row.entity_cd] || colorMap['default']
         }))
 
+
+
+        // 6. Total Expenditures
+        const spentRes = await client.query(`
+            SELECT COALESCE(SUM(total_expenditures), 0) as total
+            FROM filings 
+            WHERE filer_name ILIKE $1
+        `, [politicianName])
+        const totalExpenditures = parseFloat(spentRes.rows[0].total)
+
+        // 7. Expenditure Trend
+        const expTrendRes = await client.query(`
+            SELECT 
+                TO_CHAR(t.transaction_date, 'YYYY-MM') as date,
+                SUM(t.amount) as amount
+            FROM transactions t
+            JOIN filings f ON t.filing_id = f.id
+            WHERE f.filer_name ILIKE $1 AND t.transaction_type = 'EXPENDITURE'
+            GROUP BY 1
+            ORDER BY 1 ASC
+        `, [politicianName])
+
+        const expenditureTrend = expTrendRes.rows.map(row => ({
+            date: row.date,
+            amount: parseFloat(row.amount)
+        }))
+
+        // 8. Top Expenditures (Vendors)
+        // LEFT JOIN profiles to get ID if accessible
+        const topExpRes = await client.query(`
+            SELECT 
+                t.entity_name,
+                SUM(t.amount) as value,
+                MAX(p.id::text) as id,
+                MAX(p.type) as type
+            FROM transactions t
+            JOIN filings f ON t.filing_id = f.id
+            LEFT JOIN profiles p ON t.entity_name = p.name
+            WHERE f.filer_name ILIKE $1 AND t.transaction_type = 'EXPENDITURE'
+            GROUP BY t.entity_name
+            ORDER BY value DESC
+            LIMIT 5
+        `, [politicianName])
+
+        const topExpenditures = topExpRes.rows.map(row => ({
+            name: row.entity_name,
+            value: parseFloat(row.value),
+            id: row.id,
+            type: row.type
+        }))
+
         return {
             totalRaised,
-            cashOnHand,
+
             donorCount,
             fundraisingTrend,
-            donorComposition
+            donorComposition,
+            totalExpenditures,
+            expenditureTrend,
+            topExpenditures
         }
+
 
     } catch (error) {
         console.error("Error fetching politician stats:", error)
-        return { totalRaised: 0, cashOnHand: 0, donorCount: 0, fundraisingTrend: [], donorComposition: [] }
+        return {
+            totalRaised: 0,
+            cashOnHand: 0,
+            donorCount: 0,
+            fundraisingTrend: [],
+            donorComposition: [],
+            totalExpenditures: 0,
+            expenditureTrend: [],
+            topExpenditures: []
+        }
     } finally {
         if (client) client.release()
     }
@@ -296,12 +430,17 @@ export const getLobbyistStats = cache(async (lobbyistName: string) => {
 
         // 2. Beneficiaries (Who did they give to?)
         // We need to find the filer_name of the filings where these transactions occurred
+        // LEFT JOIN profiles to get ID
         const benRes = await client.query(`
             SELECT 
                 f.filer_name as name,
-                SUM(t.amount) as amount
+                SUM(t.amount) as amount,
+                
+                MAX(p.id::text) as id,
+                MAX(p.type) as type
             FROM transactions t
             JOIN filings f ON t.filing_id = f.id
+            LEFT JOIN profiles p ON f.filer_name = p.name
             WHERE t.entity_name = $1 AND t.transaction_type = 'CONTRIBUTION'
             GROUP BY f.filer_name
             ORDER BY amount DESC
@@ -311,7 +450,9 @@ export const getLobbyistStats = cache(async (lobbyistName: string) => {
         const beneficiaries = benRes.rows.map(row => ({
             name: row.name,
             amount: `$${parseFloat(row.amount).toLocaleString()}`,
-            type: 'Contribution'
+            type: 'Contribution',
+            id: row.id,
+            profileType: row.type || 'POLITICIAN' // Fallback to politician if type not found but name is there
         }))
 
         return {

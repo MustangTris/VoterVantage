@@ -79,7 +79,7 @@ export function DonationForm() {
                     stripe={stripePromise}
                     options={{ clientSecret }}
                 >
-                    <EmbeddedCheckout className="h-[600px] rounded-lg overflow-hidden" />
+                    <EmbeddedCheckout className="min-h-[600px] rounded-lg" />
                 </EmbeddedCheckoutProvider>
             </div>
         )

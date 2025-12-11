@@ -28,8 +28,8 @@ export default function AboutPage() {
                     <div className="max-w-3xl mx-auto glass-panel p-8 rounded-2xl border-white/10 bg-white/5 backdrop-blur-md">
                         <p className="text-lg text-slate-300 leading-relaxed text-left">
                             VoterVantage is your only non-profit database of local political campaign finance disclosures.
-                            We provide open-source data regarding local political donations. Currently serving the Coachella Valley,
-                            we look forward to bringing this transparency to a city near you!
+                            We provide open-source data regarding local political donations. Grassrooted right here in the Coachella Valley,
+                            we are dedicated to bringing transparency to our desert communities and beyond!
                         </p>
                     </div>
                 </div>
@@ -100,6 +100,7 @@ export default function AboutPage() {
                         </h2>
                         <p className="text-lg text-slate-300 mb-6 leading-relaxed">
                             Transparency is key to ensuring voter trust. By offering a comprehensive view of who is donating to local candidates, VoterVantage empowers voters to make informed decisions at the polls.
+                            We are a locally founded and operated organization dedicated to shedding light on the politics that affect our daily lives in the desert.
                         </p>
                         <p className="text-slate-400 mb-8">
                             We proudly serve cities including Desert Hot Springs, Palm Springs, Rancho Mirage, Palm Desert, La Quinta, Indio, and Coachella.

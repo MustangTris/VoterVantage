@@ -67,7 +67,7 @@ export function Toast({
 
             <button
                 onClick={() => onOpenChange?.(false)}
-                className="absolute right-2 top-2 rounded-md p-1 text-slate-400 opacity-0 transition-opacity hover:text-white focus:opacity-100 group-hover:opacity-100 group-hover:bg-white/10 z-20"
+                className="absolute right-2 top-2 rounded-md p-1 text-slate-400 opacity-70 transition-opacity hover:text-white hover:bg-white/10 z-20"
             >
                 <X className="h-4 w-4" />
             </button>

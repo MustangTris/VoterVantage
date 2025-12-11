@@ -18,10 +18,10 @@ export default async function LobbyGroupsOverview() {
                 {/* Header */}
                 <div className="mb-12 text-center">
                     <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-teal-400">
-                        Lobbyists Dashboard
+                        Donors Dashboard
                     </h1>
                     <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-                        Analyze spending and influence of lobby groups and registered lobbyists.
+                        Analyze spending and influence of donors and funding entities.
                     </p>
                 </div>
 
@@ -29,12 +29,12 @@ export default async function LobbyGroupsOverview() {
                 <div className="grid gap-6 md:grid-cols-3 mb-12">
                     <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-slate-300">Total Lobbyists</CardTitle>
+                            <CardTitle className="text-sm font-medium text-slate-300">Total Donors</CardTitle>
                             <Users className="h-4 w-4 text-green-400" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-3xl font-bold text-white">{stats.totalLobbyists}</div>
-                            <p className="text-xs text-slate-400">Registered entities</p>
+                            <p className="text-xs text-slate-400">Registered donors</p>
                         </CardContent>
                     </Card>
                     <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
@@ -51,14 +51,14 @@ export default async function LobbyGroupsOverview() {
                     </Card>
                     <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-slate-300">Avg. Spend per Group</CardTitle>
+                            <CardTitle className="text-sm font-medium text-slate-300">Avg. Spend per Donor</CardTitle>
                             <Briefcase className="h-4 w-4 text-teal-400" />
                         </CardHeader>
                         <CardContent>
                             <div className="text-3xl font-bold text-white">
                                 ${stats.totalLobbyists > 0 ? Math.round(stats.totalSpent / stats.totalLobbyists).toLocaleString() : 0}
                             </div>
-                            <p className="text-xs text-slate-400">Per registered entity</p>
+                            <p className="text-xs text-slate-400">Per registered donor</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -104,7 +104,7 @@ export default async function LobbyGroupsOverview() {
                 {/* Info Section */}
                 <div className="glass-panel p-8 rounded-2xl border border-white/5 flex flex-col md:flex-row items-center justify-between gap-8">
                     <div>
-                        <h3 className="text-xl font-bold text-white mb-2">Understanding Lobbying Data</h3>
+                        <h3 className="text-xl font-bold text-white mb-2">Understanding Donor Data</h3>
                         <p className="text-slate-400 max-w-xl">
                             Our data tracks both direct contributions to candidates and independent expenditures on ballot measures.
                             Comparison data includes all processed Form 460 filings.
@@ -112,7 +112,7 @@ export default async function LobbyGroupsOverview() {
                     </div>
                     <Link href="/search">
                         <span className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-medium text-white hover:bg-white/10 transition-colors">
-                            Search Specific Groups
+                            Search Specific Donors
                         </span>
                     </Link>
                 </div>

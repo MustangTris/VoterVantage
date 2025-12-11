@@ -1,34 +1,13 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { MapPin, ArrowRight, Building2, TrendingUp } from "lucide-react"
-import { getCityOverviewStats } from "@/app/actions/category-stats"
-
-const regions = [
-    {
-        name: "Riverside County",
-        cities: [
-            { name: "Desert Hot Springs", link: "/dashboard/dhs", active: true },
-            { name: "Palm Springs", link: "/dashboard/palm-springs", active: true },
-            { name: "Rancho Mirage", link: "/dashboard/rancho-mirage", active: true },
-            { name: "Palm Desert", link: "/dashboard/palm-desert", active: true },
-            { name: "La Quinta", link: "/dashboard/la-quinta", active: true },
-            { name: "Indio", link: "/dashboard/indio", active: true },
-            { name: "Coachella", link: "/dashboard/coachella", active: true },
-            { name: "Cathedral City", link: "/dashboard/cathedral-city", active: false },
-        ]
-    },
-    {
-        name: "San Bernardino County",
-        cities: [
-            { name: "San Bernardino", link: "#", active: false },
-        ]
-    }
-]
+import { getCityOverviewStats, getAllCities } from "@/app/actions/category-stats"
 
 export const dynamic = 'force-dynamic'
 
 export default async function CitiesPage() {
     const stats = await getCityOverviewStats()
+    const allCities = await getAllCities()
 
     return (
         <div className="flex flex-col min-h-screen relative overflow-hidden">
@@ -56,7 +35,7 @@ export default async function CitiesPage() {
                                 </div>
                                 <div>
                                     <div className="text-sm text-slate-400">Active Cities</div>
-                                    <div className="text-2xl font-bold text-white">{regions.reduce((acc, r) => acc + r.cities.filter(c => c.active).length, 0)}</div>
+                                    <div className="text-2xl font-bold text-white">{stats.totalCities}</div>
                                 </div>
                             </div>
                         </div>
@@ -81,32 +60,32 @@ export default async function CitiesPage() {
                     </div>
 
                     <div className="max-w-5xl mx-auto space-y-16">
-                        {regions.map((region) => (
-                            <div key={region.name} className="space-y-6">
-                                <h2 className="text-2xl font-bold text-white/80 border-b border-white/10 pb-2 pl-2">
-                                    {region.name}
-                                </h2>
+                        <div className="space-y-6">
+                            <h2 className="text-2xl font-bold text-white/80 border-b border-white/10 pb-2 pl-2">
+                                Coachella Valley Cities
+                            </h2>
+                            {allCities.length === 0 ? (
+                                <div className="text-slate-400 text-center py-12 bg-white/5 rounded-xl border border-white/10">
+                                    No cities found. Upload data to get started.
+                                </div>
+                            ) : (
                                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {region.cities.map((city) => (
-                                        <Link href={city.active ? city.link : "#"} key={city.name} className={city.active ? "" : "pointer-events-none opacity-50"}>
+                                    {allCities.map((city) => (
+                                        <Link href={`/cities/${city.id}`} key={city.id}>
                                             <div className="glass-panel p-6 rounded-2xl flex items-center justify-between hover:bg-white/10 transition-all duration-300 group border border-white/5 hover:border-purple-500/30">
                                                 <div className="flex items-center gap-4">
-                                                    <div className={`h-10 w-10 rounded-full flex items-center justify-center ${city.active ? "bg-purple-500/20 text-purple-400" : "bg-slate-700/50 text-slate-500"}`}>
+                                                    <div className="h-10 w-10 rounded-full flex items-center justify-center bg-purple-500/20 text-purple-400">
                                                         <MapPin className="h-5 w-5" />
                                                     </div>
                                                     <span className="font-semibold text-white text-lg">{city.name}</span>
                                                 </div>
-                                                {city.active ? (
-                                                    <ArrowRight className="h-5 w-5 text-slate-500 group-hover:text-purple-400 transition-colors" />
-                                                ) : (
-                                                    <span className="text-xs text-slate-500 uppercase tracking-wider font-medium px-2 py-1 rounded bg-slate-800/50">Coming Soon</span>
-                                                )}
+                                                <ArrowRight className="h-5 w-5 text-slate-500 group-hover:text-purple-400 transition-colors" />
                                             </div>
                                         </Link>
                                     ))}
                                 </div>
-                            </div>
-                        ))}
+                            )}
+                        </div>
                     </div>
                 </div>
             </section>

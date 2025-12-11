@@ -41,6 +41,7 @@ export async function Navbar() {
                         Home
                     </Link>
                     <SearchMenu />
+
                     <Link
                         className="text-sm font-medium text-slate-300 hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all"
                         href="/about"
@@ -54,7 +55,7 @@ export async function Navbar() {
                         <input
                             type="search"
                             name="q"
-                            placeholder="Search politicians..."
+                            placeholder="Search politicians, donors..."
                             className="h-9 w-64 rounded-full bg-white/5 border border-white/10 pl-4 pr-10 text-sm text-white outline-none focus:ring-2 focus:ring-purple-500/50 focus:bg-white/10 transition-all placeholder:text-slate-500"
                         />
                         <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">

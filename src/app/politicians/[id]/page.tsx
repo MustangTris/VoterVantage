@@ -1,8 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { DollarSign, Vote, Users, TrendingUp, PieChart } from "lucide-react"
+import { DollarSign, Vote, Users, TrendingUp, PieChart, TrendingDown } from "lucide-react"
+import Link from "next/link"
 import { TrendChart } from "@/components/charts/TrendChart"
-import { SourceBreakdownChart } from "@/components/charts/SourceBreakdownChart"
+
 import { getPoliticianStats } from "@/app/actions/stats"
+import { TransactionsTable } from "@/components/TransactionsTable"
 import pool from "@/lib/db"
 import { notFound } from "next/navigation"
 
@@ -53,7 +55,7 @@ export default async function PoliticianDashboard({ params }: PageProps) {
                     </div>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2 mb-8">
                     <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium text-slate-300">Total Raised</CardTitle>
@@ -66,14 +68,15 @@ export default async function PoliticianDashboard({ params }: PageProps) {
                     </Card>
                     <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-slate-300">Cash on Hand</CardTitle>
-                            <DollarSign className="h-4 w-4 text-blue-400" />
+                            <CardTitle className="text-sm font-medium text-slate-300">Total Spent</CardTitle>
+                            <TrendingDown className="h-4 w-4 text-red-400" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-white">${stats.cashOnHand.toLocaleString()}</div>
-                            <p className="text-xs text-slate-400">Latest report</p>
+                            <div className="text-2xl font-bold text-white">${(stats.totalExpenditures || 0).toLocaleString()}</div>
+                            <p className="text-xs text-slate-400">Total expenditures</p>
                         </CardContent>
                     </Card>
+
                     <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium text-slate-300">Donor Count</CardTitle>
@@ -99,17 +102,65 @@ export default async function PoliticianDashboard({ params }: PageProps) {
                         </CardContent>
                     </Card>
 
+
+
                     <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
                         <CardHeader>
                             <CardTitle className="text-white flex items-center gap-2">
-                                <PieChart className="h-5 w-5 text-purple-400" />
-                                Donation Sources
+                                <TrendingDown className="h-5 w-5 text-red-400" />
+                                Spending History
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <SourceBreakdownChart data={stats.donorComposition} />
+                            <TrendChart data={stats.expenditureTrend || []} title="Expenditures" color="#f87171" />
                         </CardContent>
                     </Card>
+
+                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                        <CardHeader>
+                            <CardTitle className="text-white flex items-center gap-2">
+                                <DollarSign className="h-5 w-5 text-red-400" />
+                                Top Expenses
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                {(stats.topExpenditures && stats.topExpenditures.length > 0) ? (
+                                    stats.topExpenditures.map((item: any, i: number) => (
+                                        <div key={i} className="flex items-center justify-between border-b border-white/5 pb-2 last:border-0 last:pb-0">
+                                            <div className="flex-1 min-w-0 mr-4">
+                                                {item.id ? (
+                                                    <Link
+                                                        href={item.type === 'POLITICIAN' ? `/politicians/${item.id}` : `/lobby-groups/${item.id}`}
+                                                        className="text-sm font-medium text-blue-400 hover:underline truncate block"
+                                                        title={item.name}
+                                                    >
+                                                        {item.name}
+                                                    </Link>
+                                                ) : (
+                                                    <p className="text-sm font-medium text-slate-200 truncate" title={item.name}>{item.name}</p>
+                                                )}
+                                            </div>
+                                            <div className="text-sm font-bold text-red-400">
+                                                ${item.value.toLocaleString()}
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-slate-500 text-sm text-center py-4">No expenditure data available.</p>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Transactions Table */}
+                <div className="mb-8">
+                    <TransactionsTable
+                        viewType="POLITICIAN"
+                        entityName={profileName}
+                        title={`Contributions to ${profileName}`}
+                    />
                 </div>
             </div>
         </div>

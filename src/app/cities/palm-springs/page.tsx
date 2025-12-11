@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Building2, DollarSign, Vote, Users, TrendingUp, PieChart } from "lucide-react"
 import { TrendChart } from "@/components/charts/TrendChart"
-import { SourceBreakdownChart } from "@/components/charts/SourceBreakdownChart"
+
 import { getCityStats } from "@/app/actions/stats"
 
 // Ensure dynamic rendering since we are fetching live data
@@ -47,16 +47,7 @@ export default async function PalmSpringsDashboard() {
                             <p className="text-xs text-slate-400">Total raised this cycle</p>
                         </CardContent>
                     </Card>
-                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-slate-300">Active Measures</CardTitle>
-                            <Vote className="h-4 w-4 text-purple-400" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-white">{stats.activeMeasures}</div>
-                            <p className="text-xs text-slate-400">On the ballot</p>
-                        </CardContent>
-                    </Card>
+
                     <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium text-slate-300">Candidates</CardTitle>
@@ -69,12 +60,12 @@ export default async function PalmSpringsDashboard() {
                     </Card>
                     <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-slate-300">Registered Lobbyists</CardTitle>
+                            <CardTitle className="text-sm font-medium text-slate-300">Unique Donors</CardTitle>
                             <Building2 className="h-4 w-4 text-orange-400" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-white">{stats.lobbyistsCount}</div>
-                            <p className="text-xs text-slate-400">Active in city</p>
+                            <div className="text-2xl font-bold text-white">{stats.donorsCount}</div>
+                            <p className="text-xs text-slate-400">Donors to campaigns</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -95,17 +86,7 @@ export default async function PalmSpringsDashboard() {
                     </Card>
 
                     {/* Source Breakdown (Donor Composition) */}
-                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
-                        <CardHeader>
-                            <CardTitle className="text-white flex items-center gap-2">
-                                <PieChart className="h-5 w-5 text-blue-400" />
-                                Donor Composition
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <SourceBreakdownChart data={stats.donorComposition} />
-                        </CardContent>
-                    </Card>
+
                 </div>
 
                 {/* Dashboard Content */}

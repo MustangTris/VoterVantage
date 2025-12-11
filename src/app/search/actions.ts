@@ -5,15 +5,16 @@ import pool from '@/lib/db';
 export type SearchResult = {
     id: string;
     title: string;
-    type: 'POLITICIAN' | 'LOBBYIST' | 'CITY' | 'FILING' | 'TRANSACTION';
+    type: 'POLITICIAN' | 'LOBBYIST' | 'CITY';
     description: string;
+    matchType?: 'DIRECT' | 'FILING' | 'TRANSACTION';
+    matchDetail?: string;
     date?: string;
 };
 
 export async function searchDatabase(query: string): Promise<SearchResult[]> {
     if (!query || query.length < 2) return [];
 
-    // If no database URL is set, return empty array (safe fallback for now)
     if (!process.env.DATABASE_URL) {
         console.warn("Database connection string missing");
         return [];
@@ -26,59 +27,74 @@ export async function searchDatabase(query: string): Promise<SearchResult[]> {
         const client = await pool.connect();
 
         try {
-            // 1. Search Profiles
-            const profilesQuery = `
-        SELECT id, name as title, type, description, created_at
-        FROM profiles
-        WHERE name ILIKE $1 OR description ILIKE $1
-        LIMIT 5
-      `;
-            const profilesRes = await client.query(profilesQuery, [searchTerm]);
+            // Unified Search Query
+            // 1. Direct Profile Matches
+            // 2. Matches via Filings (filer_name = profile.name)
+            // 3. Matches via Transactions (filing -> filer -> profile)
 
-            profilesRes.rows.forEach((row: any) => {
+            const unifiedQuery = `
+                WITH matches AS (
+                    -- 1. Direct Profile Matches
+                    SELECT 
+                        p.id, p.name, p.type, p.description, p.created_at,
+                        'DIRECT' as match_type,
+                        NULL as match_detail,
+                        1 as priority
+                    FROM profiles p
+                    WHERE p.name ILIKE $1 OR p.description ILIKE $1
+                    
+                    UNION ALL
+                    
+                    -- 2. Matches via Filings
+                    SELECT 
+                        p.id, p.name, p.type, p.description, p.created_at,
+                        'FILING' as match_type,
+                        f.filer_name as match_detail,
+                        2 as priority
+                    FROM profiles p
+                    JOIN filings f ON f.filer_name = p.name
+                    WHERE f.filer_name ILIKE $1
+                    
+                    UNION ALL
+                    
+                    -- 3. Matches via Transactions
+                    SELECT 
+                        p.id, p.name, p.type, p.description, p.created_at,
+                        'TRANSACTION' as match_type,
+                        t.entity_name || ' ($' || t.amount || ')' as match_detail,
+                        3 as priority
+                    FROM profiles p
+                    JOIN filings f ON f.filer_name = p.name
+                    JOIN transactions t ON t.filing_id = f.id
+                    WHERE t.entity_name ILIKE $1 OR t.description ILIKE $1
+                )
+                SELECT DISTINCT ON (id) 
+                    id, name, type, description, created_at, match_type, match_detail
+                FROM matches
+                ORDER BY id, priority ASC
+                LIMIT 20;
+            `;
+
+            const res = await client.query(unifiedQuery, [searchTerm]);
+
+            res.rows.forEach((row: any) => {
+                let description = row.description || `Profile for ${row.name}`;
+
+                // Enhance description based on match source
+                if (row.match_type === 'TRANSACTION') {
+                    description = `Found via transaction: ${row.match_detail}`;
+                } else if (row.match_type === 'FILING') {
+                    description = `Found via filing: ${row.match_detail}`;
+                }
+
                 results.push({
                     id: row.id,
-                    title: row.title,
-                    type: row.type, // 'POLITICIAN', 'LOBBYIST', 'CITY'
-                    description: row.description || `Profile for ${row.title}`,
+                    title: row.name,
+                    type: row.type,
+                    description: description,
+                    matchType: row.match_type,
+                    matchDetail: row.match_detail,
                     date: row.created_at?.toString()
-                });
-            });
-
-            // 2. Search Filings
-            const filingsQuery = `
-        SELECT id, filer_name, status, filing_date
-        FROM filings
-        WHERE filer_name ILIKE $1
-        LIMIT 5
-      `;
-            const filingsRes = await client.query(filingsQuery, [searchTerm]);
-
-            filingsRes.rows.forEach((row: any) => {
-                results.push({
-                    id: row.id,
-                    title: `Filing: ${row.filer_name}`,
-                    type: 'FILING',
-                    description: `Status: ${row.status}`,
-                    date: row.filing_date?.toString()
-                });
-            });
-
-            // 3. Search Transactions (Contributors/Payees)
-            const transQuery = `
-        SELECT id, entity_name, amount, transaction_type, description
-        FROM transactions
-        WHERE entity_name ILIKE $1 OR description ILIKE $1
-        LIMIT 5
-      `;
-            const transRes = await client.query(transQuery, [searchTerm]);
-
-            transRes.rows.forEach((row: any) => {
-                results.push({
-                    id: row.id,
-                    title: `${row.transaction_type}: ${row.entity_name}`,
-                    type: 'TRANSACTION',
-                    description: `Amount: $${row.amount} - ${row.description || ''}`,
                 });
             });
 
@@ -88,7 +104,6 @@ export async function searchDatabase(query: string): Promise<SearchResult[]> {
 
     } catch (error) {
         console.error("Database search error:", error);
-        // In production, might want to rethrow or return error state
     }
 
     return results;
@@ -100,8 +115,6 @@ export async function getConnectedCities(): Promise<string[]> {
 
         const client = await pool.connect();
         try {
-            // In a real app, you might join with a 'locations' table or similar.
-            // For now, we look for profiles of type 'CITY'.
             const query = `
                 SELECT DISTINCT name 
                 FROM profiles 

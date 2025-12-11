@@ -1,0 +1,66 @@
+=== PROFILES BY TYPE ===
+[
+  {
+    "type": "LOBBYIST",
+    "count": "57"
+  },
+  {
+    "type": "CITY",
+    "count": "1"
+  },
+  {
+    "type": "POLITICIAN",
+    "count": "1"
+  }
+]
+
+=== ALL POLITICIAN PROFILES ===
+[
+  {
+    "id": "1f3b387a-126c-4e3b-b573-2d11c3a5dbbc",
+    "name": "Friends of Lupe Ramos Amith for Indio City Council 2024",
+    "city": "Indio",
+    "created_at": "2025-12-10T23:02:28.826Z"
+  }
+]
+
+=== ALL CITY PROFILES ===
+[
+  {
+    "id": "a3acb864-9de1-46e5-8a13-12aa54fb53dd",
+    "name": "Indio",
+    "created_at": "2025-12-10T23:02:29.113Z"
+  }
+]
+
+=== DISTINCT FILER NAMES FROM FILINGS ===
+[
+  {
+    "filer_name": "2024 Committee to Elect Stephen Nelson for Palm Desert City Council, District 3"
+  },
+  {
+    "filer_name": "Committee to Elect Waymond Fermon for Indio City Council"
+  },
+  {
+    "filer_name": "Elect Michael O'Keefe Rancho Mirage City Council 2024"
+  },
+  {
+    "filer_name": "Friends of Lupe Ramos Amith for Indio City Council 2024"
+  },
+  {
+    "filer_name": "Jan Pye for DHS Council 2022"
+  },
+  {
+    "filer_name": "Lynn T Mallotto for Rancho Mirage City Council 2022"
+  },
+  {
+    "filer_name": "Meg Marker for City Council 2022"
+  },
+  {
+    "filer_name": "Nunez for DHS Council 2024"
+  },
+  {
+    "filer_name": "Oscar Ortiz for Indio City Council"
+  }
+]
+

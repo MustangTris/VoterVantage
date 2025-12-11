@@ -51,16 +51,7 @@ export function UserMenu({ user }: UserMenuProps) {
     }
 
     if (!user) {
-        return (
-            <Link href="/login">
-                <Button
-                    size="sm"
-                    className="glass-button border-white/20 hover:bg-purple-600/20 text-white rounded-full px-6 transition-all"
-                >
-                    Login
-                </Button>
-            </Link>
-        )
+        return null
     }
 
     return (

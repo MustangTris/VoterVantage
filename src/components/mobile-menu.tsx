@@ -56,7 +56,7 @@ export function MobileMenu() {
                         <input
                             type="search"
                             name="q"
-                            placeholder="Search politicians..."
+                            placeholder="Search politicians, donors..."
                             className="h-10 w-full rounded-2xl bg-white/5 border border-white/10 pl-4 pr-10 text-sm text-white outline-none focus:ring-2 focus:ring-purple-500/50 focus:bg-white/10 transition-all placeholder:text-slate-500"
                         />
                         <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
@@ -69,6 +69,7 @@ export function MobileMenu() {
                             { href: "/", label: "Home", icon: null },
                             { href: "/search", label: "Search Data", icon: FileText },
                             { href: "/categories", label: "Browse Categories", icon: Building2 },
+                            { href: "/counties", label: "Counties", icon: Building2 },
                             { href: "/about", label: "About Us", icon: User },
                         ].map((link) => (
                             <div key={link.href}>
