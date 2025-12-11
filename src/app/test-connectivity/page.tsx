@@ -7,6 +7,34 @@ export default async function TestConnectivityPage() {
     let dbStatus = "Unknown";
     let profiles: any[] = [];
     let errorMsg = "";
+    let debugInfo: any = {};
+
+    // Simulate the logic from db.ts to see what we are trying to connect with
+    try {
+        const originalString = process.env.DATABASE_URL || "";
+        const url = new URL(originalString);
+
+        // Logic from db.ts
+        if (url.hostname.includes('pooler.supabase.com') && url.port === '5432') {
+            url.port = '6543';
+        }
+
+        url.searchParams.delete('sslmode');
+
+        debugInfo = {
+            host: url.hostname,
+            port: url.port,
+            user: url.username,
+            database: url.pathname.replace('/', ''),
+            protocol: url.protocol,
+            // Check if password has special chars that might break parsing
+            passwordLength: url.password ? url.password.length : 0,
+            passwordHasAt: url.password ? url.password.includes('@') : false,
+            passwordHasHash: url.password ? url.password.includes('#') : false
+        };
+    } catch (parseErr: any) {
+        debugInfo = { error: "Failed to parse DATABASE_URL", details: parseErr.message };
+    }
 
     try {
         const client = await pool.connect();
@@ -20,7 +48,6 @@ export default async function TestConnectivityPage() {
     } catch (e: any) {
         dbStatus = "Failed";
         errorMsg = e.message;
-        // Try to capture some config info safely
         if (e.code) errorMsg += ` (Code: ${e.code})`;
     }
 
@@ -35,10 +62,21 @@ export default async function TestConnectivityPage() {
                     <GlassCardHeader>
                         <GlassCardTitle>Status: <span className={dbStatus === 'Connected' ? 'text-green-400' : 'text-red-400'}>{dbStatus}</span></GlassCardTitle>
                     </GlassCardHeader>
-                    <GlassCardContent>
-                        <p>Time Checked: {new Date().toLocaleString()}</p>
-                        <p className="text-sm text-slate-400">DATABASE_URL Env: {envUrl}</p>
-                        {errorMsg && <p className="text-red-400 mt-2">Error: {errorMsg}</p>}
+                    <GlassCardContent className="space-y-4">
+                        <div>
+                            <p>Time Checked: {new Date().toLocaleString()}</p>
+                            <p className="text-sm text-slate-400">DATABASE_URL Env: {envUrl}</p>
+                            {errorMsg && <p className="text-red-400 font-bold mt-2">Error: {errorMsg}</p>}
+                        </div>
+
+                        <div className="bg-black/40 p-4 rounded-md font-mono text-sm space-y-2 border border-white/10">
+                            <p className="text-slate-400 border-b border-white/10 pb-2 mb-2">Connection Debug Info</p>
+                            <p>Host: <span className="text-blue-300">{debugInfo.host}</span></p>
+                            <p>Port: <span className="text-blue-300">{debugInfo.port}</span></p>
+                            <p>User: <span className="text-blue-300">{debugInfo.user}</span></p>
+                            <p>Database: <span className="text-blue-300">{debugInfo.database}</span></p>
+                            {debugInfo.error && <p className="text-red-400">{debugInfo.error}: {debugInfo.details}</p>}
+                        </div>
                     </GlassCardContent>
                 </GlassCard>
 
