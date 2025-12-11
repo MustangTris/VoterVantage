@@ -20,21 +20,18 @@ export default async function PoliticianDashboard({ params }: PageProps) {
     // 1. Fetch Profile
     let profileName = ""
     let profileDesc = ""
+
+    const client = await pool.connect()
     try {
-        const client = await pool.connect()
-        try {
-            const res = await client.query("SELECT name, description FROM profiles WHERE id = $1 AND type = 'POLITICIAN'", [id])
-            if (res.rows.length === 0) {
-                notFound()
-            }
-            profileName = res.rows[0].name
-            profileDesc = res.rows[0].description || "Candidate Profile"
-        } finally {
-            client.release()
+        const res = await client.query("SELECT name, description FROM profiles WHERE id = $1 AND type = 'POLITICIAN'", [id])
+        if (res.rows.length === 0) {
+            console.error(`[PoliticianDashboard] Politician not found for ID: ${id}`)
+            notFound()
         }
-    } catch (error) {
-        console.error("DB Error:", error)
-        notFound()
+        profileName = res.rows[0].name
+        profileDesc = res.rows[0].description || "Candidate Profile"
+    } finally {
+        client.release()
     }
 
     // 2. Fetch Stats

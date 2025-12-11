@@ -19,21 +19,19 @@ export default async function CityDashboard({ params }: PageProps) {
     // 1. Fetch Profile to get Name
     let profileName = ""
     let profileDesc = ""
+
+    // Allow DB errors to bubble up (will show 500 instead of 404 if DB fails)
+    const client = await pool.connect()
     try {
-        const client = await pool.connect()
-        try {
-            const res = await client.query("SELECT name, description FROM profiles WHERE id = $1 AND type = 'CITY'", [id])
-            if (res.rows.length === 0) {
-                notFound()
-            }
-            profileName = res.rows[0].name
-            profileDesc = res.rows[0].description || "City Profile"
-        } finally {
-            client.release()
+        const res = await client.query("SELECT name, description FROM profiles WHERE id = $1 AND type = 'CITY'", [id])
+        if (res.rows.length === 0) {
+            console.error(`[CityDashboard] City not found for ID: ${id}`)
+            notFound()
         }
-    } catch (error) {
-        console.error("DB Error:", error)
-        notFound()
+        profileName = res.rows[0].name
+        profileDesc = res.rows[0].description || "City Profile"
+    } finally {
+        client.release()
     }
 
     // 2. Fetch Stats using Name

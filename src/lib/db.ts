@@ -16,9 +16,12 @@ if (originalConnectionString.includes('pooler.supabase.com') && connectionString
 }
 
 // Prepare SSL Configuration
+// Prepare SSL Configuration
 let sslConfig: PoolConfig['ssl'] = { rejectUnauthorized: false };
 
 try {
+    // Only attempt to load cert if we are NOT in production or if we specifically want to enforce it.
+    // On Vercel, the file system structure is different, and usually rejectUnauthorized: false is enough for Supabase transaction pooler.
     const certPath = path.join(process.cwd(), 'src', 'certs', 'prod-ca-2021.crt');
     if (fs.existsSync(certPath)) {
         sslConfig = {
@@ -26,6 +29,8 @@ try {
             ca: fs.readFileSync(certPath).toString(),
         };
         console.log('Using SSL Certificate for Database Connection');
+    } else {
+        console.log('SSL Certificate not found, using default SSL settings (rejectUnauthorized: false).');
     }
 } catch (err) {
     console.warn('Could not load SSL Certificate, falling back to insecure connection:', err);

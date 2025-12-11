@@ -18,21 +18,18 @@ export default async function LobbyistDashboard({ params }: PageProps) {
     // 1. Fetch Profile
     let profileName = ""
     let profileDesc = ""
+
+    const client = await pool.connect()
     try {
-        const client = await pool.connect()
-        try {
-            const res = await client.query("SELECT name, description FROM profiles WHERE id = $1 AND type = 'LOBBYIST'", [id])
-            if (res.rows.length === 0) {
-                notFound() // Or handle gracefully
-            }
-            profileName = res.rows[0].name
-            profileDesc = res.rows[0].description || "Major Donor"
-        } finally {
-            client.release()
+        const res = await client.query("SELECT name, description FROM profiles WHERE id = $1 AND type = 'LOBBYIST'", [id])
+        if (res.rows.length === 0) {
+            console.error(`[LobbyistDashboard] Lobbyist not found for ID: ${id}`)
+            notFound() // Or handle gracefully
         }
-    } catch (error) {
-        console.error("DB Error:", error)
-        notFound()
+        profileName = res.rows[0].name
+        profileDesc = res.rows[0].description || "Major Donor"
+    } finally {
+        client.release()
     }
 
     // 2. Fetch Stats
