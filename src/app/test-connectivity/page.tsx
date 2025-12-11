@@ -20,7 +20,11 @@ export default async function TestConnectivityPage() {
     } catch (e: any) {
         dbStatus = "Failed";
         errorMsg = e.message;
+        // Try to capture some config info safely
+        if (e.code) errorMsg += ` (Code: ${e.code})`;
     }
+
+    const envUrl = process.env.DATABASE_URL ? "Set" : "Missing";
 
     return (
         <div className="min-h-screen bg-slate-950 p-8 text-white">
@@ -33,6 +37,7 @@ export default async function TestConnectivityPage() {
                     </GlassCardHeader>
                     <GlassCardContent>
                         <p>Time Checked: {new Date().toLocaleString()}</p>
+                        <p className="text-sm text-slate-400">DATABASE_URL Env: {envUrl}</p>
                         {errorMsg && <p className="text-red-400 mt-2">Error: {errorMsg}</p>}
                     </GlassCardContent>
                 </GlassCard>

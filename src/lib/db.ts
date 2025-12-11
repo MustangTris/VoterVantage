@@ -6,13 +6,30 @@ const originalConnectionString = process.env.DATABASE_URL || '';
 
 // Fix: Automatically switch to Transaction Mode (port 6543) if using Supabase Pooler in Session Mode (port 5432)
 // This prevents 'MaxClientsInSessionMode' errors during builds/serverless usage.
-let connectionString = originalConnectionString
-    .replace('?sslmode=require', '')
-    .replace('&sslmode=require', '');
+// Fix: Automatically switch to Transaction Mode (port 6543) and handle SSL params safely
+let connectionString = originalConnectionString;
+try {
+    const url = new URL(originalConnectionString);
 
-if (originalConnectionString.includes('pooler.supabase.com') && connectionString.includes(':5432')) {
-    console.log('Swapping to Transaction Mode (Port 6543) for Supabase Connection Pooler to avoid connection limits.');
-    connectionString = connectionString.replace(':5432', ':6543');
+    // Remove sslmode param locally (pg client handles it via config object usually, or we set it explicitly)
+    url.searchParams.delete('sslmode');
+
+    // Switch port if needed
+    if (url.hostname.includes('pooler.supabase.com') && url.port === '5432') {
+        console.log('Swapping to Transaction Mode (Port 6543) for Supabase Connection Pooler.');
+        url.port = '6543';
+    }
+
+    connectionString = url.toString();
+
+    // Log masked connection string for debugging
+    const maskedUrl = new URL(connectionString);
+    maskedUrl.password = '****';
+    console.log(`[DB Config] Connection String: ${maskedUrl.toString()}`);
+
+} catch (e) {
+    // Fallback if URL parsing fails (e.g. invalid format)
+    console.warn('Failed to parse DATABASE_URL, using as-is:', e);
 }
 
 // Prepare SSL Configuration
