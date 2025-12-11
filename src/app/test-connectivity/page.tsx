@@ -36,12 +36,30 @@ export default async function TestConnectivityPage() {
         debugInfo = { error: "Failed to parse DATABASE_URL", details: parseErr.message };
     }
 
+    let tableStats: any = {};
+
     try {
         const client = await pool.connect();
         try {
             const res = await client.query('SELECT * FROM profiles ORDER BY created_at DESC LIMIT 5');
             profiles = res.rows;
             dbStatus = "Connected";
+            
+            // Get Counts
+            const pCount = await client.query('SELECT COUNT(*) FROM profiles');
+            const tCount = await client.query('SELECT COUNT(*) FROM transactions');
+            const fCount = await client.query('SELECT COUNT(*) FROM filings');
+            
+            // Get Sample Transaction to check linking
+            const tSample = await client.query('SELECT entity_profile_id, amount, transaction_type FROM transactions LIMIT 3');
+            
+            tableStats = {
+                profiles: pCount.rows[0].count,
+                transactions: tCount.rows[0].count,
+                filings: fCount.rows[0].count,
+                sampleTransactions: tSample.rows
+            };
+            
         } finally {
             client.release();
         }
@@ -50,7 +68,8 @@ export default async function TestConnectivityPage() {
         errorMsg = e.message;
         if (e.code) errorMsg += ` (Code: ${e.code})`;
     }
-
+    
+    // Safety masking
     const envUrl = process.env.DATABASE_URL ? "Set" : "Missing";
 
     return (
@@ -77,6 +96,19 @@ export default async function TestConnectivityPage() {
                             <p>Database: <span className="text-blue-300">{debugInfo.database}</span></p>
                             {debugInfo.error && <p className="text-red-400">{debugInfo.error}: {debugInfo.details}</p>}
                         </div>
+
+                        {dbStatus === 'Connected' && (
+                            <div className="bg-black/40 p-4 rounded-md font-mono text-sm space-y-2 border border-white/10 mt-4">
+                                <p className="text-slate-400 border-b border-white/10 pb-2 mb-2">Data Counts</p>
+                                <p>Profiles: <span className="text-yellow-300">{tableStats.profiles}</span></p>
+                                <p>Transactions: <span className="text-yellow-300">{tableStats.transactions}</span></p>
+                                <p>Filings: <span className="text-yellow-300">{tableStats.filings}</span></p>
+                                <div className="mt-2 text-xs text-slate-500">
+                                    Sample Transactions (Check linking):
+                                    <pre>{JSON.stringify(tableStats.sampleTransactions, null, 2)}</pre>
+                                </div>
+                            </div>
+                        )}
                     </GlassCardContent>
                 </GlassCard>
 
