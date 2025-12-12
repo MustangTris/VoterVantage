@@ -20,7 +20,7 @@ export function createServiceRoleClient() {
     }
 
     return createClient(supabaseUrl, serviceRoleKey, {
-        db: { schema: 'api' }, // Explicitly use the 'api' schema where tables are located
+        db: { schema: 'public' }, // Use 'public' schema which is exposed by default
         auth: {
             persistSession: false,
             autoRefreshToken: false,

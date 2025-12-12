@@ -23,6 +23,7 @@ async function debugStats() {
         .select('id, name, city')
         .eq('city', 'Indio');
 
+    if (pError) console.error("Profile Error:", pError);
     console.log(`Profiles in Indio: ${profiles?.length || 0}`);
     profiles?.forEach(p => console.log(` - [${p.name}]`));
 
