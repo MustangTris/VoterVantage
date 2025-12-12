@@ -52,18 +52,30 @@ async function seed() {
         ];
 
         for (const p of profiles) {
-            await client.query(`
-                INSERT INTO profiles (name, type, city, description)
-                VALUES ($1, $2, $3, $4)
-                ON CONFLICT (id) DO NOTHING; -- Names aren't unique constraint in schema, but we'll just insert
-            `, [p.name, p.type, p.city, p.desc]);
+            // Try Insert
+            try {
+                await client.query(`
+                    INSERT INTO profiles (name, type, city, description)
+                    VALUES ($1, $2, $3, $4)
+                `, [p.name, p.type, p.city, p.desc]);
+                console.log(`Inserted: ${p.name}`);
+            } catch (err) {
+                // Ignore unique constraint violations (already exists)
+                if (err.code === '23505') {
+                    console.log(`Skipped (Already Exists): ${p.name}`);
+                } else {
+                    throw err;
+                }
+            }
         }
-        console.log(`inserted ${profiles.length} profiles.`);
 
-        // Get IDs
+        // Re-fetch all profiles to build the map correctly (whether inserted or existing)
         const res = await client.query("SELECT id, name FROM profiles");
         const profileMap = {};
-        res.rows.forEach(r => profileMap[r.name] = r.id);
+        res.rows.forEach(r => {
+            profileMap[r.name] = r.id;
+            console.log(`Profile: ${r.name} => ${r.id}`);
+        });
 
         // 2. Create a Filing
         const filingRes = await client.query(`
