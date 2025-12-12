@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Building2, DollarSign, Vote, Users, TrendingUp, PieChart } from "lucide-react"
 import { TrendChart } from "@/components/charts/TrendChart"
+import { CategoryBarChart } from "@/components/charts/CategoryBarChart"
+import { DistributionPieChart } from "@/components/charts/DistributionPieChart"
 
 import { getCityStats } from "@/app/actions/stats"
 
@@ -86,20 +88,107 @@ export default async function PalmSpringsDashboard() {
                     </Card>
 
                     {/* Source Breakdown (Donor Composition) */}
+                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                        <CardHeader>
+                            <CardTitle className="text-white flex items-center gap-2">
+                                <PieChart className="h-5 w-5 text-orange-400" />
+                                Donation Sources
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <DistributionPieChart data={stats.donorComposition || []} title="Total" />
+                        </CardContent>
+                    </Card>
+                </div>
 
+                <div className="grid gap-8 md:grid-cols-2 mb-8">
+                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                        <CardHeader>
+                            <CardTitle className="text-white flex items-center gap-2">
+                                <DollarSign className="h-5 w-5 text-red-400" />
+                                City-Wide Spending (By Category)
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <CategoryBarChart data={stats.expenditureBreakdown || []} title="Spent" color="#f87171" />
+                        </CardContent>
+                    </Card>
+
+                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                        <CardHeader>
+                            <CardTitle className="text-white flex items-center gap-2">
+                                <Building2 className="h-5 w-5 text-emerald-400" />
+                                Donor Locations (Local vs External)
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <CategoryBarChart data={stats.donorLocationBreakdown || []} title="Donated" color="#10b981" />
+                        </CardContent>
+                    </Card>
                 </div>
 
                 {/* Dashboard Content */}
-                <div className="grid gap-8 md:grid-cols-2">
-                    {/* Top Campaigns (Text List) - Kept as additional info */}
-                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm h-full md:col-span-2">
+                <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                    {/* Top Campaigns */}
+                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm h-full">
                         <CardHeader>
-                            <CardTitle className="text-white">Active Campaigns (Fundraising)</CardTitle>
+                            <CardTitle className="text-white">Active Campaigns</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-slate-400 italic text-center py-8">
-                                Campaign comparison data coming soon.
-                            </div>
+                            {stats.topRecipients.length === 0 ? (
+                                <div className="text-slate-400 italic text-center py-4">No active campaigns found.</div>
+                            ) : (
+                                <ul className="space-y-4">
+                                    {stats.topRecipients.map((item, i) => (
+                                        <li key={i} className="flex justify-between items-center border-b border-white/5 pb-2 last:border-0 last:pb-0">
+                                            <span className="text-slate-200 text-sm truncate max-w-[150px]" title={item.name}>{item.name}</span>
+                                            <span className="text-green-400 font-bold text-sm">{formatCurrency(item.amount)}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Top Donors */}
+                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm h-full">
+                        <CardHeader>
+                            <CardTitle className="text-white">Top Donors</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {stats.topDonors.length === 0 ? (
+                                <div className="text-slate-400 italic text-center py-4">No donor data available.</div>
+                            ) : (
+                                <ul className="space-y-4">
+                                    {stats.topDonors.map((item, i) => (
+                                        <li key={i} className="flex justify-between items-center border-b border-white/5 pb-2 last:border-0 last:pb-0">
+                                            <span className="text-slate-200 text-sm truncate max-w-[150px]" title={item.name}>{item.name}</span>
+                                            <span className="text-green-400 font-bold text-sm">{formatCurrency(item.amount)}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Top Expenditures */}
+                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm h-full">
+                        <CardHeader>
+                            <CardTitle className="text-white">Top Expenditures</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {stats.topExpenditures.length === 0 ? (
+                                <div className="text-slate-400 italic text-center py-4">No expenditure data available.</div>
+                            ) : (
+                                <ul className="space-y-4">
+                                    {stats.topExpenditures.map((item, i) => (
+                                        <li key={i} className="flex justify-between items-center border-b border-white/5 pb-2 last:border-0 last:pb-0">
+                                            <span className="text-slate-200 text-sm truncate max-w-[150px]" title={item.name}>{item.name}</span>
+                                            <span className="text-red-400 font-bold text-sm">{formatCurrency(item.amount)}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
                         </CardContent>
                     </Card>
                 </div>

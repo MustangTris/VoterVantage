@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Building2, DollarSign, Vote, Users, TrendingUp, PieChart, AlertCircle } from "lucide-react"
 import { TrendChart } from "@/components/charts/TrendChart"
+import { CategoryBarChart } from "@/components/charts/CategoryBarChart"
+import { DistributionPieChart } from "@/components/charts/DistributionPieChart"
 
 import { getCityStats } from "@/app/actions/stats"
 import { TransactionsTable } from "@/components/TransactionsTable"
@@ -68,7 +70,7 @@ export default async function CityDashboard({ params }: PageProps) {
                 </div>
 
                 {/* Key Metrics */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 mb-8">
                     <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium text-slate-300">Total Contributions</CardTitle>
@@ -100,6 +102,28 @@ export default async function CityDashboard({ params }: PageProps) {
                             <p className="text-xs text-slate-400">Donors to campaigns</p>
                         </CardContent>
                     </Card>
+
+                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium text-slate-300">Avg Contribution</CardTitle>
+                            <DollarSign className="h-4 w-4 text-green-400" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold text-white">${Math.round(stats.avgDonation || 0).toLocaleString()}</div>
+                            <p className="text-xs text-slate-400">City-wide average</p>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium text-slate-300">Total Burn Rate</CardTitle>
+                            <TrendingUp className="h-4 w-4 text-red-400" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold text-white">${Math.round(stats.monthlyBurnRate || 0).toLocaleString()}</div>
+                            <p className="text-xs text-slate-400">Combined monthly spend</p>
+                        </CardContent>
+                    </Card>
                 </div>
 
                 {/* Charts Row */}
@@ -118,7 +142,43 @@ export default async function CityDashboard({ params }: PageProps) {
                     </Card>
 
                     {/* Source Breakdown (Donor Composition) */}
+                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                        <CardHeader>
+                            <CardTitle className="text-white flex items-center gap-2">
+                                <PieChart className="h-5 w-5 text-orange-400" />
+                                Donation Sources
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <DistributionPieChart data={stats.donorComposition || []} title="Total" />
+                        </CardContent>
+                    </Card>
+                </div>
 
+                <div className="grid gap-8 md:grid-cols-2 mb-8">
+                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                        <CardHeader>
+                            <CardTitle className="text-white flex items-center gap-2">
+                                <DollarSign className="h-5 w-5 text-red-400" />
+                                City-Wide Spending (By Category)
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <CategoryBarChart data={stats.expenditureBreakdown || []} title="Spent" color="#f87171" />
+                        </CardContent>
+                    </Card>
+
+                    <Card className="bg-white/5 border-white/10 backdrop-blur-sm">
+                        <CardHeader>
+                            <CardTitle className="text-white flex items-center gap-2">
+                                <Building2 className="h-5 w-5 text-emerald-400" />
+                                Donor Locations (Local vs External)
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <CategoryBarChart data={stats.donorLocationBreakdown || []} title="Donated" color="#10b981" />
+                        </CardContent>
+                    </Card>
                 </div>
 
                 {/* Transactions Table */}

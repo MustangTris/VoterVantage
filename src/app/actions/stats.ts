@@ -13,6 +13,14 @@ export interface CityStats {
     topDonors: { name: string; amount: number; id?: string; type?: string }[]
     topRecipients: { name: string; amount: number; id?: string; type?: string }[]
     topExpenditures: { name: string; amount: number; id?: string; type?: string }[]
+
+    // Average & Rate Metrics
+    avgDonation: number
+    monthlyBurnRate: number
+
+    // New Analytical Data
+    expenditureBreakdown: { name: string; value: number; color?: string }[]
+    donorLocationBreakdown: { name: string; value: number }[]
 }
 
 
@@ -229,6 +237,102 @@ export const getCityStats = async (cityName: string): Promise<CityStats> => {
             type: row.type
         }))
 
+        // 10. City-Wide Expenditure Categories
+        const cityExpBreakdownRes = await client.query(`
+            SELECT 
+                t.expenditure_code,
+                SUM(t.amount) as value
+            FROM transactions t
+            JOIN filings f ON t.filing_id = f.id
+            JOIN profiles p ON f.filer_name = p.name
+            WHERE p.city ILIKE $1 AND t.transaction_type = 'EXPENDITURE'
+            GROUP BY t.expenditure_code
+        `, [cityName])
+
+        const expCodeMap: Record<string, string> = {
+            'CMP': 'Campaign Paraphernalia',
+            'CNS': 'Campaign Consultants',
+            'CTB': 'Contribution (to other)',
+            'CVC': 'Civic Donations',
+            'FIL': 'Filing Fees',
+            'FND': 'Fundraising Events',
+            'IND': 'Independent Exp',
+            'LEG': 'Legal Defense',
+            'LIT': 'Literature/Mailings',
+            'MBR': 'Member Comms',
+            'MTG': 'Meetings/Appearances',
+            'OFC': 'Office Expenses',
+            'PET': 'Petition Circulating',
+            'PHO': 'Phone Banks',
+            'POL': 'Polling',
+            'POS': 'Postage',
+            'PRO': 'Professional Services',
+            'PRT': 'Print Ads',
+            'RAD': 'Radio Airtime',
+            'RFD': 'Returned Contributions',
+            'SAL': 'Campaign Workers Salaries',
+            'TEL': 'TV/Cable Airtime',
+            'TRC': 'Candidate Travel',
+            'TRS': 'Staff/Spouse Travel',
+            'TSF': 'Transfer of Funds',
+            'VOT': 'Voter Registration',
+            'WEB': 'Web/Internet Costs'
+        }
+
+        const expenditureBreakdown = cityExpBreakdownRes.rows.map(row => ({
+            name: expCodeMap[row.expenditure_code] || row.expenditure_code || 'Uncategorized',
+            value: parseFloat(row.value),
+            color: '#f87171' // Red-ish for spending
+        })).sort((a, b) => b.value - a.value)
+
+        // 11. Donor Location Breakdown (Internal vs External)
+        // Simple logic: If entity_city matches cityName => Local, else External
+        const locRes = await client.query(`
+            SELECT 
+                CASE 
+                    WHEN t.entity_city ILIKE $1 THEN 'Local'
+                    ELSE 'External'
+                END as location_type,
+                SUM(t.amount) as value
+            FROM transactions t
+            JOIN filings f ON t.filing_id = f.id
+            JOIN profiles p ON f.filer_name = p.name
+            WHERE p.city ILIKE $1 AND t.transaction_type = 'CONTRIBUTION'
+            GROUP BY 1
+        `, [cityName])
+
+        const donorLocationBreakdown = locRes.rows.map(row => ({
+            name: row.location_type,
+            value: parseFloat(row.value)
+        }))
+
+        // 12. Average Donation (City Wide)
+        const avgDonRes = await client.query(`
+            SELECT AVG(t.amount) as avg_val
+            FROM transactions t
+            JOIN filings f ON t.filing_id = f.id
+            JOIN profiles p ON f.filer_name = p.name
+            WHERE p.city ILIKE $1 AND t.transaction_type = 'CONTRIBUTION'
+        `, [cityName])
+        const avgDonation = parseFloat(avgDonRes.rows[0].avg_val || '0')
+
+        // 13. Monthly Burn Rate (Total Exp / Months Active)
+        // Estimate range from first filing date to last
+        const burnRes = await client.query(`
+            SELECT 
+                SUM(t.amount) as total_exp,
+                EXTRACT(YEAR FROM AGE(MAX(t.transaction_date), MIN(t.transaction_date))) * 12 +
+                EXTRACT(MONTH FROM AGE(MAX(t.transaction_date), MIN(t.transaction_date))) as months_diff
+            FROM transactions t
+            JOIN filings f ON t.filing_id = f.id
+            JOIN profiles p ON f.filer_name = p.name
+            WHERE p.city ILIKE $1 AND t.transaction_type = 'EXPENDITURE'
+        `, [cityName])
+
+        const totalCityExp = parseFloat(burnRes.rows[0].total_exp || '0')
+        const monthsActive = Math.max(parseFloat(burnRes.rows[0].months_diff || '1'), 1) // Avoid div by 0
+        const monthlyBurnRate = totalCityExp / monthsActive
+
         return {
             totalRaised,
 
@@ -238,7 +342,11 @@ export const getCityStats = async (cityName: string): Promise<CityStats> => {
             donorComposition,
             topDonors,
             topRecipients,
-            topExpenditures
+            topExpenditures,
+            expenditureBreakdown,
+            donorLocationBreakdown,
+            avgDonation,
+            monthlyBurnRate
         }
 
     } catch (error) {
@@ -252,7 +360,11 @@ export const getCityStats = async (cityName: string): Promise<CityStats> => {
             donorComposition: [],
             topDonors: [],
             topRecipients: [],
-            topExpenditures: []
+            topExpenditures: [],
+            expenditureBreakdown: [],
+            donorLocationBreakdown: [],
+            avgDonation: 0,
+            monthlyBurnRate: 0
         }
     } finally {
         if (client) client.release()
@@ -385,6 +497,116 @@ export const getPoliticianStats = cache(async (politicianName: string) => {
             type: row.type
         }))
 
+        // 9. Expenditure Breakdown (By Code)
+        const expBreakdownRes = await client.query(`
+            SELECT 
+                t.expenditure_code,
+                SUM(t.amount) as value
+            FROM transactions t
+            JOIN filings f ON t.filing_id = f.id
+            WHERE f.filer_name ILIKE $1 AND t.transaction_type = 'EXPENDITURE'
+            GROUP BY t.expenditure_code
+        `, [politicianName])
+
+        const expCodeMap: Record<string, string> = {
+            'CMP': 'Campaign Paraphernalia',
+            'CNS': 'Campaign Consultants',
+            'CTB': 'Contribution (to other)',
+            'CVC': 'Civic Donations',
+            'FIL': 'Filing Fees',
+            'FND': 'Fundraising Events',
+            'IND': 'Independent Exp',
+            'LEG': 'Legal Defense',
+            'LIT': 'Literature/Mailings',
+            'MBR': 'Member Comms',
+            'MTG': 'Meetings/Appearances',
+            'OFC': 'Office Expenses',
+            'PET': 'Petition Circulating',
+            'PHO': 'Phone Banks',
+            'POL': 'Polling',
+            'POS': 'Postage',
+            'PRO': 'Professional Services',
+            'PRT': 'Print Ads',
+            'RAD': 'Radio Airtime',
+            'RFD': 'Returned Contributions',
+            'SAL': 'Comp. Salaries',
+            'TEL': 'TV/Cable Airtime',
+            'TRC': 'Candidate Travel',
+            'TRS': 'Staff/Spouse Travel',
+            'TSF': 'Transfer of Funds',
+            'VOT': 'Voter Registration',
+            'WEB': 'Web/Internet Costs'
+        }
+
+        const expenditureBreakdown = expBreakdownRes.rows.map(row => ({
+            name: expCodeMap[row.expenditure_code] || row.expenditure_code || 'Uncategorized',
+            value: parseFloat(row.value),
+            color: '#f87171'
+        })).sort((a, b) => b.value - a.value)
+
+        // 10. Contributor Occupation Breakdown
+        const occRes = await client.query(`
+            SELECT 
+                COALESCE(t.contributor_occupation, 'Unknown') as name,
+                SUM(t.amount) as value
+            FROM transactions t
+            JOIN filings f ON t.filing_id = f.id
+            WHERE f.filer_name ILIKE $1 AND t.transaction_type = 'CONTRIBUTION'
+            AND t.entity_cd = 'IND' -- Usually only individuals have occupations
+            GROUP BY 1
+            ORDER BY 2 DESC
+            LIMIT 10
+        `, [politicianName])
+
+        const contributorOccupationBreakdown = occRes.rows.map(row => ({
+            name: row.name,
+            value: parseFloat(row.value),
+            color: '#6366f1' // Indigo
+        }))
+
+        // 11. Contributor Location Breakdown
+        const locRes = await client.query(`
+            SELECT 
+                COALESCE(t.entity_city, 'Unknown') as name,
+                SUM(t.amount) as value
+            FROM transactions t
+            JOIN filings f ON t.filing_id = f.id
+            WHERE f.filer_name ILIKE $1 AND t.transaction_type = 'CONTRIBUTION'
+            GROUP BY 1
+            ORDER BY 2 DESC
+            LIMIT 10
+        `, [politicianName])
+
+        const contributorLocationBreakdown = locRes.rows.map(row => ({
+            name: row.name,
+            value: parseFloat(row.value),
+            color: '#10b981' // Emerald
+        }))
+
+        // 12. Average Donation
+        const avgDonRes = await client.query(`
+            SELECT AVG(t.amount) as avg_val
+            FROM transactions t
+            JOIN filings f ON t.filing_id = f.id
+            WHERE f.filer_name ILIKE $1 AND t.transaction_type = 'CONTRIBUTION'
+        `, [politicianName])
+        const avgDonation = parseFloat(avgDonRes.rows[0].avg_val || '0')
+
+        // 13. Monthly Burn Rate
+        const burnRes = await client.query(`
+            SELECT 
+                SUM(t.amount) as total_exp,
+                EXTRACT(YEAR FROM AGE(MAX(t.transaction_date), MIN(t.transaction_date))) * 12 +
+                EXTRACT(MONTH FROM AGE(MAX(t.transaction_date), MIN(t.transaction_date))) as months_diff
+            FROM transactions t
+            JOIN filings f ON t.filing_id = f.id
+            WHERE f.filer_name ILIKE $1 AND t.transaction_type = 'EXPENDITURE'
+        `, [politicianName])
+
+        const totalPolyExp = parseFloat(burnRes.rows[0].total_exp || '0')
+        const polyMonths = Math.max(parseFloat(burnRes.rows[0].months_diff || '1'), 1)
+        const monthlyBurnRate = totalPolyExp / polyMonths
+
         return {
             totalRaised,
 
@@ -393,7 +615,12 @@ export const getPoliticianStats = cache(async (politicianName: string) => {
             donorComposition,
             totalExpenditures,
             expenditureTrend,
-            topExpenditures
+            topExpenditures,
+            expenditureBreakdown,
+            contributorOccupationBreakdown,
+            contributorLocationBreakdown,
+            avgDonation,
+            monthlyBurnRate
         }
 
 
@@ -407,7 +634,12 @@ export const getPoliticianStats = cache(async (politicianName: string) => {
             donorComposition: [],
             totalExpenditures: 0,
             expenditureTrend: [],
-            topExpenditures: []
+            topExpenditures: [],
+            expenditureBreakdown: [],
+            contributorOccupationBreakdown: [],
+            contributorLocationBreakdown: [],
+            avgDonation: 0,
+            monthlyBurnRate: 0
         }
     } finally {
         if (client) client.release()

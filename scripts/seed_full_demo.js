@@ -77,34 +77,49 @@ async function seed() {
             console.log(`Profile: ${r.name} => ${r.id}`);
         });
 
-        // 2. Create a Filing
+        // 2. Create Filings
+        // Filing for Palm Springs Mayor
         const filingRes = await client.query(`
             INSERT INTO filings (filer_name, filing_date, total_contributions, total_expenditures, status)
             VALUES ($1, $2, $3, $4, $5)
             RETURNING id
         `, ['Mayor Sarah Jenkins', new Date(), 50000.00, 15000.00, 'PROCESSED']);
         const filingId = filingRes.rows[0].id;
-        console.log("Inserted filing:", filingId);
+        console.log("Inserted filing (Palm Springs):", filingId);
+
+        // Filing for Indio Councilman
+        const filingIndioRes = await client.query(`
+             INSERT INTO filings (filer_name, filing_date, total_contributions, total_expenditures, status)
+             VALUES ($1, $2, $3, $4, $5)
+             RETURNING id
+        `, ['Councilman Bob Smith', new Date(), 25000.00, 5000.00, 'PROCESSED']);
+        const filingIndioId = filingIndioRes.rows[0].id;
+        console.log("Inserted filing (Indio):", filingIndioId);
 
         // 3. Create Transactions
         const transactions = [
-            { type: 'CONTRIBUTION', amount: 5000, entity: 'BuildIt Corp', date: '2024-01-15' },
-            { type: 'CONTRIBUTION', amount: 2500, entity: 'Green Energy Sol', date: '2024-02-10' },
-            { type: 'EXPENDITURE', amount: 5000, entity: 'Print Shop Local', date: '2024-03-01' },
-            { type: 'CONTRIBUTION', amount: 100, entity: 'John Doe', date: '2024-01-20' },
+            // Palm Springs
+            { type: 'CONTRIBUTION', amount: 5000, entity: 'BuildIt Corp', date: '2024-01-15', filing_id: filingId, cd: 'COM' },
+            { type: 'CONTRIBUTION', amount: 2500, entity: 'Green Energy Sol', date: '2024-02-10', filing_id: filingId, cd: 'OTH' },
+            { type: 'EXPENDITURE', amount: 5000, entity: 'Print Shop Local', date: '2024-03-01', filing_id: filingId },
+
+            // Indio
+            { type: 'CONTRIBUTION', amount: 10000, entity: 'BuildIt Corp', date: '2024-01-20', filing_id: filingIndioId, cd: 'COM' },
+            { type: 'CONTRIBUTION', amount: 500, entity: 'John Doe', date: '2024-02-15', filing_id: filingIndioId, cd: 'IND' },
+            { type: 'EXPENDITURE', amount: 2000, entity: 'Indio Events Center', date: '2024-03-10', filing_id: filingIndioId }
         ];
 
         for (const t of transactions) {
             await client.query(`
                 INSERT INTO transactions (
                     filing_id, transaction_type, amount, entity_name, 
-                    entity_profile_id, transaction_date, description
+                    entity_profile_id, transaction_date, description, entity_cd
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             `, [
-                filingId, t.type, t.amount, t.entity,
+                t.filing_id, t.type, t.amount, t.entity,
                 profileMap[t.entity] || null, // Link if exists
-                t.date, 'Seeded transaction'
+                t.date, 'Seeded transaction', t.cd || 'OTH'
             ]);
         }
         console.log(`Inserted ${transactions.length} transactions.`);

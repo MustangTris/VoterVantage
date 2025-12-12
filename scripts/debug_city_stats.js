@@ -11,7 +11,7 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey, {
-    db: { schema: 'api' }
+    db: { schema: 'public' }
 });
 
 async function debugStats() {

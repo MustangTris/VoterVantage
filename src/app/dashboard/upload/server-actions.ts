@@ -24,8 +24,8 @@ export async function createFilingHeader(data: {
 
         const supabase = createServiceRoleClient()
 
-        // 1. Check for Duplicate Filing
-        // Check if filing exists with same source file URL (exact match to prevent re-uploading the exact same file)
+        // 1. Check for Duplicate Filing - REMOVED to allow forced re-uploads
+        /*
         if (data.source_file_url) {
             const { data: existingDupes } = await supabase
                 .from('filings')
@@ -37,6 +37,7 @@ export async function createFilingHeader(data: {
                 return { success: false, error: "Duplicate detected: This exact file has already been uploaded." }
             }
         }
+        */
 
         const { data: filingData, error: filingError } = await supabase
             .from('filings')
