@@ -2,7 +2,7 @@ import { Pool, PoolConfig } from 'pg';
 import fs from 'fs';
 import path from 'path';
 
-const originalConnectionString = process.env.DATABASE_URL || '';
+const originalConnectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
 
 // Fix: Automatically switch to Transaction Mode (port 6543) if using Supabase Pooler in Session Mode (port 5432)
 // This prevents 'MaxClientsInSessionMode' errors during builds/serverless usage.
