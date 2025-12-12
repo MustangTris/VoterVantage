@@ -88,8 +88,4 @@ export async function POST(request: NextRequest) {
 }
 
 // Increase payload size limit for file uploads
-export const config = {
-    api: {
-        bodyParser: false,
-    },
-}
+
